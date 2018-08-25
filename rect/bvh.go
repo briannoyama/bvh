@@ -1,63 +1,138 @@
 package rect
 
-import (
-	//"math"
-	//"strings"
-)
+import "math"
+
+//"math"
+//"strings"
 
 const WIDTH int = 2
 
 //A Bounding Volume for orthotopes. Wraps the orthotope and .
 type BVol struct {
-	orth  *Orthotope
-	desc  *BDesc
+	orth *Orthotope
+	desc *BDesc
 }
 
 type BDesc struct {
 	vol   [WIDTH]*BVol
-	depth uint
+	depth int
 	len   int
 }
-/*
-//Get an iterator for each volume in a Bounding Volume Hierarhcy.
-func (bvh *BVOrth) Iterator() *orthStack {
-	stack := &orthStack{bvStack: []*BVOrth{bvh}, intStack: []int{0}}
+
+// Get an iterator for each volume in a Bounding Volume Hierarhcy.
+func (bvol *BVol) Iterator() *orthStack {
+	stack := &orthStack{bvStack: []*BVol{bvol}, intStack: []int{0}}
 	return stack
 }
 
-//Query for a volume in the BVH. Does not modify the hierarchy.
-func (bvh *BVOrth) Query(orth *Orthotope) []*Orthotope {
-	low_index := -1
-	var intersections []*Orthotope
-	var stack *orthStack
-
-	for next := bvh; ; next = next.desc[low_index] {
-		if next.orth.Overlaps(orth) {
-			if next.desc[0] == nil {
-				intersections = append(intersections, next.orth)
-				low_index = 1
-				next, _ = stack.pop()
-			} else {
-				low_index = 0
-			}
-		} else {
-			//Go up as long as we have a "left"-parent
-			next, low_index = stack.pop()
-			for low_index == 1 && stack.hasNext() {
-				if !stack.hasNext() {
-					return intersections
-				}
-
-				next, low_index = stack.pop()
-			}
-			low_index = 1
-
-		}
-		stack.append(next, low_index)
-	}
-	return intersections
+// Add a volume to the end of the descendent list.
+func (bdesc *BDesc) Append(bvol *BVol) {
+	bdesc.vol[bdesc.len] = bvol
+	bdesc.len++
 }
 
+// Get a slice holding the contents of this volume for convenience.
+func (bdesc *BDesc) Slice() []*BVol {
+	return bdesc.vol[:bdesc.len]
+}
+
+// Replace the existing elements in the volume
+func (bdesc *BDesc) replace(children []*BVol) {
+	for i := 0; i < len(children); i++ {
+		bdesc.vol[i] = children[i]
+	}
+
+	for i := len(children); i < WIDTH; i++ {
+		bdesc.vol[i] = nil
+	}
+
+	bdesc.len = len(children)
+}
+
+// Add an orthotope to a Bounding Volume Hierarchy. Only add to root volume.
+func (bvol *BVol) Add(orth *Orthotope) {
+	comp := *orth
+	lowIndex := -1
+	s := &orthStack{bvStack: []*BVol{}, intStack: []int{}}
+
+	for next := bvol; next.orth != orth; next = next.desc.vol[lowIndex] {
+		if next.desc == nil {
+			// We've reached a leaf node, and we need to insert a parent node.
+			newDesc := &BDesc{len: 2}
+			newDesc.vol[0] = &BVol{orth: orth}
+			newDesc.vol[1] = &BVol{orth: next.orth}
+			comp.MinBounds(next.orth, orth)
+			next.orth = &comp
+			lowIndex = 0
+		} else if next.desc.depth == 0 && next.desc.len < WIDTH {
+			// We've found an empty space in an existing desc. Append.
+			lowIndex = next.desc.len
+			next.desc.Append(&BVol{orth: orth})
+		} else {
+			// We cannot add the orthotope here. Descend.
+			smallestScore := math.MaxInt32
+
+			for index, desc := range next.desc.Slice() {
+				comp.MinBounds(orth, desc.orth)
+				score := comp.Score()
+				if score < smallestScore {
+					lowIndex = index
+					smallestScore = score
+				}
+			}
+		}
+		s.append(next, lowIndex)
+	}
+	// Orthotope has been added, but tree needs to be rebalanced.
+	s.rebalanceAdd(orth)
+}
+
+func (bvol *BVol) minBounds() {
+	children := bvol.desc.Slice()
+	orthotopes := make([]*Orthotope, len(children), len(children))
+	bvol.orth.MinBounds(orthotopes...)
+}
+
+func (bvol *BVol) redistribute(child1, child2 int) {
+	cvol1 := bvol.desc.vol[child1]
+	cvol2 := bvol.desc.vol[child2]
+	gChildren := cvol1.desc.Slice()
+	gChildren = append(gChildren, cvol2.desc.Slice()...)
+	split := len(gChildren) / 2
+
+	length := len(gChildren)
+
+	midPoints := make([]int, length, length)
+	volumes := make([]*Orthotope, length, length)
+
+	minScore := math.MaxInt32
+	orth1, orth2 := Orthotope{}, Orthotope{}
+	// Insertion sort for each dimension to find ideal grouping.
+	for dim := 0; dim < DIMENSIONS; dim++ {
+		for i := 0; i < length; i++ {
+			midPoints[i] = gChildren[i].orth.midpoint(dim)
+			volumes[i] = gChildren[i].orth
+			for j := i; j > 0 && midPoints[j] < midPoints[j-1]; j-- {
+				midPoints[j], midPoints[j-1] = midPoints[j-1], midPoints[j]
+				gChildren[j], gChildren[j-1] = gChildren[j-1], gChildren[j]
+				volumes[j], volumes[j-1] = volumes[j-1], volumes[j]
+			}
+		}
+		orth1.MinBounds(volumes[:split]...)
+		orth2.MinBounds(volumes[split:]...)
+		score := orth1.Score() + orth2.Score()
+		if score < minScore {
+			// Update the children with the best split
+			minScore = score
+			cvol1.desc.replace(gChildren[:split])
+			cvol2.desc.replace(gChildren[split:])
+			*cvol1.orth = orth1
+			*cvol2.orth = orth2
+		}
+	}
+}
+
+/*
 //Remove an orthtope from the BVH. Only remove from root volume.
 func (bvh *BVOrth) Remove(orth *Orthotope) bool {
 	low_index := -1
@@ -150,38 +225,6 @@ func (bvh *BVOrth) sahReduce2(parent int) {
 		bvh.desc[parent], sibling.desc[minIndex] = sibling.desc[minIndex],
 			bvh.desc[parent]
 	}
-}
-
-//Add an orthotope to a Bounding Volume Hierarchy. Only add to root volume.
-func (bvh *BVOrth) Add(orth *Orthotope) {
-	comp := orth.DimensionCopy()
-	low_index := -1
-	newBVO := &BVOrth{orth: orth}
-	stack := &orthStack{bvStack: []*BVOrth{}, intStack: []int{}}
-
-	for next := bvh; next.orth != orth; next = next.desc[low_index] {
-		//If a child is nil, then the current node is a leaf
-		if next.desc[0] == nil {
-			comp.MinBounds(next.orth, orth)
-			neighbor := &BVOrth{orth: next.orth}
-			next.orth = comp
-			next.desc[0] = newBVO
-			next.desc[1] = neighbor
-			next.depth = 1
-			low_index = 0
-		} else {
-			comp.MinBounds(next.desc[0].orth, orth)
-			lowest := comp.Score()
-			comp.MinBounds(next.desc[1].orth, orth)
-			if comp.Score() < lowest {
-				low_index = 1
-			} else {
-				low_index = 0
-			}
-		}
-		stack.append(next, low_index)
-	}
-	rebalance0(stack, orth)
 }
 
 func (bvh *BVOrth) rebound() {

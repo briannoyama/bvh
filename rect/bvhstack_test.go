@@ -1,40 +1,39 @@
 package rect
-/*
+
 import (
 	"testing"
 )
 
 func TestNext(t *testing.T) {
-	bvs := []*BVOrth{
-		&BVOrth{
+	bvs := []*BVol{
+		&BVol{
 			orth: &Orthotope{
-				point: []int{2, 2},
-				delta: []int{8, 8},
-			},
-			desc:  [2]*BVOrth{},
-			depth: 1,
-		},
-		&BVOrth{
-			orth: &Orthotope{
-				point: []int{2, 2},
-				delta: []int{2, 2},
+				point: [DIMENSIONS]int{2, 2},
+				delta: [DIMENSIONS]int{8, 8},
 			},
 		},
-		&BVOrth{
+		&BVol{
 			orth: &Orthotope{
-				point: []int{7, 7},
-				delta: []int{3, 3},
+				point: [DIMENSIONS]int{2, 2},
+				delta: [DIMENSIONS]int{2, 2},
+			},
+		},
+		&BVol{
+			orth: &Orthotope{
+				point: [DIMENSIONS]int{7, 7},
+				delta: [DIMENSIONS]int{3, 3},
 			},
 		},
 	}
 
-	bvs[0].desc[0] = bvs[1]
-	bvs[0].desc[1] = bvs[2]
+	bvs[0].desc = &BDesc{vol: [WIDTH]*BVol{bvs[1], bvs[2]}, len: 2, depth: 1}
 
 	iter := bvs[0].Iterator()
-	for i, next := 0, iter.Next(); next != nil; i, next = i+1, iter.Next() {
+	for i := 0; iter.HasNext(); i++ {
+		next := iter.Next()
+
 		if bvs[i] != next {
-			t.Errorf("Iterator did not return the %vth element in order", i)
+			t.Errorf("Iterator did not return the element %v in order", i)
 		}
 	}
 }
@@ -42,4 +41,3 @@ func TestNext(t *testing.T) {
 func TestTrace(t *testing.T) {
 	//tree := getIdealTree()
 }
-*/

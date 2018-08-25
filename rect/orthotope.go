@@ -3,6 +3,7 @@ package rect
 import (
 	"fmt"
 	"math"
+
 	disc "github.com/briannoyama/bvh/discreet"
 )
 
@@ -51,7 +52,7 @@ func (orth *Orthotope) Intersects(o *Orthotope) int {
 		out_t = disc.Min(out_t, p1_t)
 	}
 
-	if in_t < out_t {
+	if in_t < out_t && in_t >= 0 {
 		return in_t
 	}
 	return -1
@@ -94,6 +95,10 @@ func (o *Orthotope) Compare(other *Orthotope) int {
 	}
 	// Return 0 if the orthtopes are equal
 	return 0
+}
+
+func (o *Orthotope) midpoint(dimension int) int {
+	return (o.point[dimension] + o.delta[dimension]) / 2
 }
 
 func (o *Orthotope) String() string {
