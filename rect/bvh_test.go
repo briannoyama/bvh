@@ -12,13 +12,10 @@ import (
 func drawBVH(bvOrth *BVol, name string) {
 	myimage := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{25, 25}})
 	iter := bvOrth.Iterator()
-	for next := iter.Next(); next != nil; next = iter.Next() {
-		depth := 0
-		if next.desc != nil {
-			depth = next.desc.depth + 1
-		}
+	for iter.HasNext() {
+		next := iter.Next()
 
-		c := color.RGBA{uint8(255 / (depth + 1)), uint8(255 / (2*depth + 1)),
+		c := color.RGBA{uint8(255 / (next.depth + 1)), uint8(255 / (2*next.depth + 1)),
 			uint8(255), 255}
 		for y := next.orth.point[1]; y < next.orth.point[1]+next.orth.delta[1]; y += 1 {
 			myimage.Set(next.orth.point[0], y, c)

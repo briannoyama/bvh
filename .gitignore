@@ -1,1 +1,4 @@
+#Ignore everything
+*.*
+#Except go files.
 !*.go

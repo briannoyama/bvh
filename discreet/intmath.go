@@ -10,3 +10,8 @@ func Min(i int, j int) int {
 func Max(i int, j int) int {
 	return i ^ ((i ^ j) & ((i - j) >> SHIFT))
 }
+
+func Abs(i int) int {
+	mask := (i >> SHIFT)
+	return mask ^ (mask + i)
+}

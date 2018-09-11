@@ -1,22 +1,27 @@
 package rect
 
-import "math"
+import (
+	"math"
+
+	disc "github.com/briannoyama/bvh/discreet"
+)
 
 //"math"
 //"strings"
 
-const WIDTH int = 2
-
 //A Bounding Volume for orthotopes. Wraps the orthotope and .
 type BVol struct {
-	orth *Orthotope
-	desc *BDesc
+	orth  *Orthotope
+	vol   [2]*BVol
+	depth int
 }
 
-type BDesc struct {
-	vol   [WIDTH]*BVol
-	depth int
-	len   int
+func (bvol *BVol) minBound() {
+	bvol.orth.MinBounds(bvol.vol[0].orth, bvol.vol[1].orth)
+}
+
+func (bvol *BVol) redepth() {
+	bvol.depth = disc.Max(bvol.vol[0].depth, bvol.vol[1].depth) + 1
 }
 
 // Get an iterator for each volume in a Bounding Volume Hierarhcy.
@@ -25,55 +30,26 @@ func (bvol *BVol) Iterator() *orthStack {
 	return stack
 }
 
-// Add a volume to the end of the descendent list.
-func (bdesc *BDesc) Append(bvol *BVol) {
-	bdesc.vol[bdesc.len] = bvol
-	bdesc.len++
-}
-
-// Get a slice holding the contents of this volume for convenience.
-func (bdesc *BDesc) Slice() []*BVol {
-	return bdesc.vol[:bdesc.len]
-}
-
-// Replace the existing elements in the volume
-func (bdesc *BDesc) replace(children []*BVol) {
-	for i := 0; i < len(children); i++ {
-		bdesc.vol[i] = children[i]
-	}
-
-	for i := len(children); i < WIDTH; i++ {
-		bdesc.vol[i] = nil
-	}
-
-	bdesc.len = len(children)
-}
-
 // Add an orthotope to a Bounding Volume Hierarchy. Only add to root volume.
 func (bvol *BVol) Add(orth *Orthotope) {
-	comp := *orth
+	comp := Orthotope{}
 	lowIndex := -1
 	s := &orthStack{bvStack: []*BVol{}, intStack: []int{}}
 
-	for next := bvol; next.orth != orth; next = next.desc.vol[lowIndex] {
-		if next.desc == nil {
+	for next := bvol; next.orth != orth; next = next.vol[lowIndex] {
+		if next.depth == 0 {
 			// We've reached a leaf node, and we need to insert a parent node.
-			newDesc := &BDesc{len: 2}
-			newDesc.vol[0] = &BVol{orth: orth}
-			newDesc.vol[1] = &BVol{orth: next.orth}
-			comp.MinBounds(next.orth, orth)
+			next.vol[0] = &BVol{orth: orth}
+			next.vol[1] = &BVol{orth: next.orth}
+			comp = *next.orth
 			next.orth = &comp
 			lowIndex = 0
-		} else if next.desc.depth == 0 && next.desc.len < WIDTH {
-			// We've found an empty space in an existing desc. Append.
-			lowIndex = next.desc.len
-			next.desc.Append(&BVol{orth: orth})
 		} else {
 			// We cannot add the orthotope here. Descend.
 			smallestScore := math.MaxInt32
 
-			for index, desc := range next.desc.Slice() {
-				comp.MinBounds(orth, desc.orth)
+			for index, vol := range next.vol {
+				comp.MinBounds(orth, vol.orth)
 				score := comp.Score()
 				if score < smallestScore {
 					lowIndex = index
@@ -87,49 +63,44 @@ func (bvol *BVol) Add(orth *Orthotope) {
 	s.rebalanceAdd(orth)
 }
 
-func (bvol *BVol) minBounds() {
-	children := bvol.desc.Slice()
-	orthotopes := make([]*Orthotope, len(children), len(children))
-	bvol.orth.MinBounds(orthotopes...)
+func (bvol *BVol) redistribute() {
+	// If the depth is 0 then we need to do a tri swap.
+	if bvol.vol[0].depth == 0 {
+		swapCheck(bvol.vol[1], bvol, 0)
+	} else if bvol.vol[1].depth == 0 {
+		swapCheck(bvol.vol[0], bvol, 1)
+	} else {
+		swapCheck(bvol.vol[0], bvol.vol[1], 1)
+	}
 }
 
-func (bvol *BVol) redistribute(child1, child2 int) {
-	cvol1 := bvol.desc.vol[child1]
-	cvol2 := bvol.desc.vol[child2]
-	gChildren := cvol1.desc.Slice()
-	gChildren = append(gChildren, cvol2.desc.Slice()...)
-	split := len(gChildren) / 2
+func swapCheck(first *BVol, second *BVol, secIndex int) {
+	minScore := first.orth.Score() + second.orth.Score()
+	minIndex := -1
 
-	length := len(gChildren)
-
-	midPoints := make([]int, length, length)
-	volumes := make([]*Orthotope, length, length)
-
-	minScore := math.MaxInt32
-	orth1, orth2 := Orthotope{}, Orthotope{}
-	// Insertion sort for each dimension to find ideal grouping.
-	for dim := 0; dim < DIMENSIONS; dim++ {
-		for i := 0; i < length; i++ {
-			midPoints[i] = gChildren[i].orth.midpoint(dim)
-			volumes[i] = gChildren[i].orth
-			for j := i; j > 0 && midPoints[j] < midPoints[j-1]; j-- {
-				midPoints[j], midPoints[j-1] = midPoints[j-1], midPoints[j]
-				gChildren[j], gChildren[j-1] = gChildren[j-1], gChildren[j]
-				volumes[j], volumes[j-1] = volumes[j-1], volumes[j]
-			}
-		}
-		orth1.MinBounds(volumes[:split]...)
-		orth2.MinBounds(volumes[split:]...)
-		score := orth1.Score() + orth2.Score()
+	for index := 0; index < 2; index++ {
+		first.vol[index].orth, second.vol[secIndex].orth =
+			second.vol[secIndex].orth, first.vol[index].orth
+		//Score first then second, since first may be a child of second.
+		first.minBound()
+		second.minBound()
+		score := first.orth.Score() + second.orth.Score()
 		if score < minScore {
 			// Update the children with the best split
 			minScore = score
-			cvol1.desc.replace(gChildren[:split])
-			cvol2.desc.replace(gChildren[split:])
-			*cvol1.orth = orth1
-			*cvol2.orth = orth2
+			minIndex = index
 		}
 	}
+
+	if minIndex < 1 {
+		first.vol[minIndex+1].orth, second.vol[secIndex].orth =
+			second.vol[secIndex].orth, first.vol[minIndex+1].orth
+		first.minBound()
+		second.minBound()
+		first.depth = disc.Max(first.vol[0].depth, first.vol[1].depth) + 1
+		first.depth = disc.Max(first.vol[0].depth, first.vol[1].depth) + 1
+	}
+
 }
 
 /*

@@ -41,25 +41,14 @@ func (s *orthStack) popIfExists() (*BVol, int) {
  * In this way, next pops off an element while traversing the tree in pre-order.
  */
 func (s *orthStack) Next() *BVol {
-	bvol, index := s.peek()
-	bvolPrev := bvol
+	bvolPrev, _ := s.peek()
 
-	// Trace up tree
-	for bvol.desc == nil || bvol.desc.len <= index {
-		s.pop()
-
-		// The end of the stack.
-		if !s.HasNext() {
-			return bvolPrev
-		}
-
-		// Check out next child.
-		s.intStack[len(s.intStack)-1]++
-		bvol, index = s.peek()
+	if s.traceUp() {
+		bvol, index := s.peek()
+		bvol = bvol.vol[index]
+		s.append(bvol, 0)
 	}
 
-	bvol = bvol.desc.vol[index]
-	s.append(bvol, 0)
 	return bvolPrev
 }
 
@@ -70,37 +59,81 @@ func (s *orthStack) Next() *BVol {
  */
 func (s *orthStack) Trace(o *Orthotope) (*Orthotope, int, int) {
 	bvol, distance := s.pop()
-	var depth int
 
-	if bvol.desc != nil {
-		// Get the depth to return.
-		depth = bvol.desc.depth
+	if bvol.depth > 0 {
 
 		// Find the distances for each child, if there's a collision.
-		distances := []int{}
-		volumes := []*BVol{}
-		for i := 0; i < bvol.desc.len; i++ {
-			distance := o.Intersects(bvol.desc.vol[i].orth)
-			if distance >= 0 {
-				distances = append(distances, distance)
-				volumes = append(volumes, bvol.desc.vol[i])
+		distance0 := o.Intersects(bvol.vol[0].orth)
+		distance1 := o.Intersects(bvol.vol[1].orth)
 
-				// Insertion sort, to return values that are closest first.
-				for j := i; j >= 1; j-- {
-					if distances[j] > distances[j-1] {
-						distances[j], distances[j-1] = distances[j-1], distances[j]
-						volumes[j], volumes[j-1] = volumes[j-1], volumes[j]
-					}
+		if distance0 >= 0 {
+			if distance1 >= 0 {
+				if distance1 < distance0 {
+					s.append(bvol.vol[0], distance0)
+					s.append(bvol.vol[1], distance1)
+				} else {
+					s.append(bvol.vol[1], distance1)
+					s.append(bvol.vol[0], distance0)
 				}
+			} else {
+				s.append(bvol.vol[0], distance0)
 			}
-		}
-
-		for index, vol := range volumes {
-			s.append(vol, distances[index])
+		} else if distance1 >= 0 {
+			s.append(bvol.vol[1], distance1)
 		}
 	}
 
-	return bvol.orth, depth, distance
+	return bvol.orth, bvol.depth, distance
+}
+
+/* Goes up the tree until it finds the next unvisited child index, after
+ * looking at parents.
+ */
+func (s *orthStack) traceUp() bool {
+	bvol, index := s.peek()
+	for bvol.depth == 0 || index >= 2 {
+		s.pop()
+
+		// The end of the stack.
+		if !s.HasNext() {
+			return false
+		}
+
+		// Check out next child.
+		s.intStack[len(s.intStack)-1]++
+		bvol, index = s.peek()
+	}
+	return true
+}
+
+func (s *orthStack) upNext() bool {
+	s.pop()
+
+	// The end of the stack.
+	if s.HasNext() {
+		s.intStack[len(s.intStack)-1]++
+		return true
+	}
+	return false
+}
+
+func (s *orthStack) queryNext(o *Orthotope) *BVol {
+	bvol, index := s.peek()
+	for bvol.depth > 0 {
+		if index >= 2 {
+			if !s.traceUp() {
+				break
+			}
+		} else {
+			if bvol.vol[index].orth.Overlaps(o) {
+				s.append(bvol.vol[index], 0)
+			} else {
+				s.intStack[len(s.intStack)-1]++
+			}
+		}
+		bvol, index = s.peek()
+	}
+	return bvol
 }
 
 /*
@@ -108,64 +141,40 @@ func (s *orthStack) Trace(o *Orthotope) (*Orthotope, int, int) {
  * returning one intersection at a time.
  */
 func (s *orthStack) Query(o *Orthotope) *Orthotope {
-	bvol, index := s.peek()
+	bvol := s.queryNext(o)
 
-	for bvol.desc != nil {
-		bvol, index = bvol.desc.vol[index], 0
-		s.append(bvol, index)
+	// Use trace up to get the next possible branch.
+	if s.traceUp() {
+		s.queryNext(o)
 	}
-
-	bvolPrev := bvol
-
-	// Trace up tree
-	for bvol.desc == nil || bvol.desc.len <= index {
-		s.pop()
-
-		// The end of the stack.
-		if !s.HasNext() {
-			return bvolPrev.orth
-		}
-
-		// Check out next child.
-		s.intStack[len(s.intStack)-1]++
-		bvol, index = s.peek()
-	}
-
-	// Trace down the tree
-	for bvol.desc != nil {
-		bvol, index = bvol.desc.vol[index], 0
-		s.append(bvol, index)
-	}
-
-	return bvolPrev.orth
+	return bvol.orth
 }
 
-// Attempt rebalancing when the depth of the tree has potentially changed.
-// Hypothetically, have one rebalance method to rule them all.
+/* Attempt rebalancing when the depth of the tree has changed.
+ * Hypothetically, have one rebalance method to rule them all.
+ */
 func (s *orthStack) rebalanceAdd(o *Orthotope) {
 	gParent, gIndex := s.pop()
-	last_depth := 0
+	lastDepth := 1
 	for s.HasNext() {
 		parent, pIndex := gParent, gIndex
 		gParent, gIndex = s.pop()
-		for index, aunt := range gParent.desc.Slice() {
-			auntDepth := 0
-			if aunt.desc != nil {
-				auntDepth = aunt.desc.depth + 1
-			}
-			if auntDepth < last_depth {
-				// parent depth is 2 above, so swap.
-				parent.desc.vol[pIndex], gParent.desc.vol[index] =
-					gParent.desc.vol[index], parent.desc.vol[pIndex]
 
-				gParent.redistribute(gIndex, index)
-				last_depth--
-				break
-			}
+		aIndex := gIndex ^ 1
+		aunt := gParent.vol[aIndex]
+		if aunt.depth+1 < lastDepth {
+			// parent depth is 2 above, so swap.
+			parent.vol[pIndex], gParent.vol[aIndex] =
+				gParent.vol[aIndex], parent.vol[pIndex]
+
+			lastDepth--
 		}
-		parent.minBounds()
-		parent.desc.depth = last_depth
-		last_depth++
+
+		parent.depth = lastDepth
+		lastDepth++
+		gParent.redistribute()
+		// Investigate another swap
 	}
-	gParent.minBounds()
+	gParent.depth = lastDepth
+	gParent.minBound()
 }

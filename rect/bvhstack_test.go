@@ -26,7 +26,8 @@ func TestNext(t *testing.T) {
 		},
 	}
 
-	bvs[0].desc = &BDesc{vol: [WIDTH]*BVol{bvs[1], bvs[2]}, len: 2, depth: 1}
+	bvs[0].vol = [2]*BVol{bvs[1], bvs[2]}
+	bvs[0].depth = 1
 
 	iter := bvs[0].Iterator()
 	for i := 0; iter.HasNext(); i++ {
