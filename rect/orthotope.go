@@ -81,26 +81,23 @@ func (o *Orthotope) Score() int {
 	return score
 }
 
-func (o *Orthotope) Compare(other *Orthotope) int {
+func (o *Orthotope) Equals(other *Orthotope) bool {
 	for index, point := range other.point {
-		if o.point[index] > point {
-			return -1
-		} else if o.point[index] < point {
-			return 1
-		} else if o.delta[index] > other.delta[index] {
-			return -1
-		} else if o.delta[index] < other.delta[index] {
-			return 1
+		if o.point[index] != point {
+			return false
+		} else if o.delta[index] != other.delta[index] {
+			return false
 		}
 	}
 	// Return 0 if the orthtopes are equal
-	return 0
+	return true
 }
 
 func (o *Orthotope) midpoint(dimension int) int {
 	return (o.point[dimension] + o.delta[dimension]) / 2
 }
 
+// Get a string representation of this orthotope.
 func (o *Orthotope) String() string {
 	return fmt.Sprintf("Point %v, Delta %v", o.point, o.delta)
 }

@@ -1,8 +1,18 @@
 package rect
 
+import "math"
+
 type orthStack struct {
+	bvh      *BVol
 	bvStack  []*BVol
 	intStack []int
+}
+
+func (s *orthStack) Reset() {
+	s.intStack[0] = 0
+	s.bvStack[0] = s.bvh
+	s.intStack = s.intStack[:1]
+	s.bvStack = s.bvStack[:1]
 }
 
 func (s *orthStack) HasNext() bool {
@@ -19,16 +29,6 @@ func (s *orthStack) peek() (*BVol, int) {
 }
 
 func (s *orthStack) pop() (*BVol, int) {
-	bvol, index := s.peek()
-	s.bvStack = s.bvStack[:len(s.bvStack)-1]
-	s.intStack = s.intStack[:len(s.intStack)-1]
-	return bvol, index
-}
-
-func (s *orthStack) popIfExists() (*BVol, int) {
-	if len(s.bvStack) == 0 {
-		return nil, -1
-	}
 	bvol, index := s.peek()
 	s.bvStack = s.bvStack[:len(s.bvStack)-1]
 	s.intStack = s.intStack[:len(s.intStack)-1]
@@ -150,31 +150,163 @@ func (s *orthStack) Query(o *Orthotope) *Orthotope {
 	return bvol.orth
 }
 
+func (s *orthStack) path(o *Orthotope) *BVol {
+	bvol, index := s.peek()
+	for bvol.depth > 0 {
+		if index >= 2 {
+			if !s.traceUp() {
+				break
+			}
+		} else {
+			if bvol.vol[index].orth.Contains(o) {
+				s.append(bvol.vol[index], 0)
+			} else {
+				s.intStack[len(s.intStack)-1]++
+			}
+		}
+		bvol, index = s.peek()
+	}
+	return bvol
+}
+
+func (s *orthStack) Contains(o *Orthotope) bool {
+	s.Reset()
+	bvol := s.path(o)
+
+	// Check that the orthotope is the last thing from the path.
+	return o == bvol.orth
+}
+
+// Add an orthotope to a Bounding Volume Hierarchy. Only add to root volume.
+func (s *orthStack) Add(orth *Orthotope) bool {
+	s.Reset()
+	bvol := s.bvh
+	comp := Orthotope{}
+	lowIndex := -1
+
+	for next := bvol; next.orth != orth; next = next.vol[lowIndex] {
+		if next.depth == 0 {
+			// We've reached a leaf node, and we need to insert a parent node.
+			next.vol[0] = &BVol{orth: orth}
+			next.vol[1] = &BVol{orth: next.orth}
+			next.depth = 1
+			comp = *next.orth
+			next.orth = &comp
+			lowIndex = 0
+		} else {
+			// We cannot add the orthotope here. Descend.
+			smallestScore := math.MaxInt32
+
+			for index, vol := range next.vol {
+				comp.MinBounds(orth, vol.orth)
+
+				if vol.orth == orth {
+					// The volume has already been added.
+					return false
+				}
+
+				score := comp.Score()
+				if score < smallestScore {
+					lowIndex = index
+					smallestScore = score
+				}
+			}
+		}
+		s.append(next, lowIndex)
+	}
+	// Orthotope has been added, but tree needs to be rebalanced.
+
+	s.rebalanceAdd()
+	return true
+}
+
+func (s *orthStack) Remove(o *Orthotope) bool {
+	s.Reset()
+	bvol := s.path(o)
+	if o == bvol.orth {
+		s.pop()
+		if s.HasNext() {
+			parent, pIndex := s.pop()
+			if s.HasNext() {
+				gParent, gIndex := s.peek()
+				// Delete the node by replacing the parent.
+				gParent.vol[gIndex] = parent.vol[pIndex^1]
+				s.rebalanceRemove()
+				return true
+			} else {
+				// Delete the node by replacing the volume and children with cousin.
+				cousin := parent.vol[pIndex^1]
+				parent.orth = cousin.orth
+				parent.vol = cousin.vol
+				parent.depth = cousin.depth
+			}
+		}
+	}
+	return false
+}
+
+func (s *orthStack) Score() int {
+	s.Reset()
+	score := 0
+
+	for s.HasNext() {
+		score += s.Next().orth.Score()
+	}
+	return score
+}
+
 /* Attempt rebalancing when the depth of the tree has changed.
  * Hypothetically, have one rebalance method to rule them all.
  */
-func (s *orthStack) rebalanceAdd(o *Orthotope) {
+func (s *orthStack) rebalanceAdd() {
 	gParent, gIndex := s.pop()
-	lastDepth := 1
 	for s.HasNext() {
 		parent, pIndex := gParent, gIndex
 		gParent, gIndex = s.pop()
 
 		aIndex := gIndex ^ 1
-		aunt := gParent.vol[aIndex]
-		if aunt.depth+1 < lastDepth {
-			// parent depth is 2 above, so swap.
+
+		if gParent.vol[aIndex].depth < parent.vol[pIndex].depth {
+			// Swap to fix balance.
 			parent.vol[pIndex], gParent.vol[aIndex] =
 				gParent.vol[aIndex], parent.vol[pIndex]
-
-			lastDepth--
+			parent.redepth()
 		}
-
-		parent.depth = lastDepth
-		lastDepth++
 		gParent.redistribute()
-		// Investigate another swap
 	}
-	gParent.depth = lastDepth
 	gParent.minBound()
+}
+
+func (s *orthStack) rebalanceRemove() {
+	for s.HasNext() {
+		parent, pIndex := s.pop()
+
+		cIndex := pIndex ^ 1
+		cousin := parent.vol[cIndex]
+		depth := parent.vol[pIndex].depth
+
+		if cousin.depth > depth+1 {
+			swap := 0
+			// Swap to fix balance. Try to minimize hierarchy with swap.
+			if cousin.vol[1].depth == depth+1 {
+				if cousin.vol[0].depth == depth+1 {
+					cousin.orth.MinBounds(cousin.vol[1].orth, parent.vol[pIndex].orth)
+					score := cousin.orth.Score()
+					cousin.orth.MinBounds(cousin.vol[0].orth, parent.vol[pIndex].orth)
+					if score < cousin.orth.Score() {
+						swap = 1
+					}
+				} else {
+					swap = 1
+				}
+			}
+			parent.vol[pIndex], cousin.vol[swap] =
+				cousin.vol[swap], parent.vol[pIndex]
+			cousin.redepth()
+			cousin.minBound()
+		}
+		//parent.redepth()
+		parent.minBound()
+		parent.redistribute()
+	}
 }
