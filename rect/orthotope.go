@@ -93,10 +93,6 @@ func (o *Orthotope) Equals(other *Orthotope) bool {
 	return true
 }
 
-func (o *Orthotope) midpoint(dimension int) int {
-	return (o.point[dimension] + o.delta[dimension]) / 2
-}
-
 // Get a string representation of this orthotope.
 func (o *Orthotope) String() string {
 	return fmt.Sprintf("Point %v, Delta %v", o.point, o.delta)

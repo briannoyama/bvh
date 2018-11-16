@@ -39,6 +39,33 @@ func TestNext(t *testing.T) {
 	}
 }
 
+func TestQuery(t *testing.T) {
+}
+
 func TestTrace(t *testing.T) {
 	//tree := getIdealTree()
+}
+
+func TestBVHContains(t *testing.T) {
+	tree := getIdealTree()
+
+	var to_check [4]*Orthotope = [4]*Orthotope{
+		leaf[2],
+		leaf[7],
+		&Orthotope{point: [d]int{100, 20}, delta: [d]int{8, 9}},
+		&Orthotope{point: [d]int{19, 2}, delta: [d]int{2, 2}}, // Similar to leaf[2]
+	}
+
+	contains := [4]bool{true, true, false, false}
+
+	iter := tree.Iterator()
+	for index, orth := range to_check {
+		if iter.Contains(orth) != contains[index] {
+			if contains[index] {
+				t.Errorf("Unable to find: %v\n", orth.String())
+			} else {
+				t.Errorf("Incorrectly found: %v\n", orth.String())
+			}
+		}
+	}
 }

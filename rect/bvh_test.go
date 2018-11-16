@@ -1,47 +1,12 @@
 package rect
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"os"
 	"testing"
 )
-
-func drawBVH(BVol *BVol, name string) {
-	myimage := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{25, 25}})
-	iter := BVol.Iterator()
-	for iter.HasNext() {
-		next := iter.Next()
-
-		c := color.RGBA{uint8(255 / (next.depth + 1)), uint8(255 / (2*next.depth + 1)),
-			uint8(255), 255}
-		for y := next.orth.point[1]; y < next.orth.point[1]+next.orth.delta[1]; y += 1 {
-			myimage.Set(next.orth.point[0], y, c)
-			myimage.Set(next.orth.point[0]+next.orth.delta[0]-1, y, c)
-		}
-		for x := next.orth.point[0]; x < next.orth.point[0]+next.orth.delta[0]; x += 1 {
-			myimage.Set(x, next.orth.point[1], c)
-			myimage.Set(x, next.orth.point[1]+next.orth.delta[1]-1, c)
-		}
-	}
-	myfile, _ := os.Create(name)
-	png.Encode(myfile, myimage)
-}
-
-var leaf [10]*Orthotope = [10]*Orthotope{
-	&Orthotope{point: [d]int{2, 2}, delta: [d]int{2, 2}},
-	&Orthotope{point: [d]int{7, 7}, delta: [d]int{3, 3}},
-	&Orthotope{point: [d]int{19, 2}, delta: [d]int{2, 2}},
-	&Orthotope{point: [d]int{16, 6}, delta: [d]int{3, 4}},
-	&Orthotope{point: [d]int{10, 11}, delta: [d]int{2, 2}},
-	&Orthotope{point: [d]int{17, 12}, delta: [d]int{2, 2}},
-	&Orthotope{point: [d]int{20, 12}, delta: [d]int{2, 2}},
-	&Orthotope{point: [d]int{4, 16}, delta: [d]int{6, 6}},
-	&Orthotope{point: [d]int{18, 21}, delta: [d]int{2, 2}},
-	&Orthotope{point: [d]int{19, 19}, delta: [d]int{4, 6}},
-}
 
 func TestAdd(t *testing.T) {
 	scores := [9]int{26, 57, 77, 100, 120, 135, 188, 218, 247}
@@ -52,7 +17,7 @@ func TestAdd(t *testing.T) {
 			t.Errorf("Unable to add: %v\n", orth.String())
 		}
 		if scores[index] != tree.Score() {
-			drawBVH(tree, "error_tree.png")
+			drawBVH(tree, "error_add_tree.png")
 			t.Errorf("Unexpected score: %d\nExpected: %d\nTree:\n%v", tree.Score(),
 				scores[index], tree.String())
 		}
@@ -61,15 +26,6 @@ func TestAdd(t *testing.T) {
 	if tree.Add(leaf[0]) {
 		t.Errorf("Incorrectly added existing volume: %v\n", leaf[0].String())
 	}
-
-	/*
-		for index, orth := range leaf[:9] {
-			fmt.Printf("%d-r\n", index)
-			tree.Remove(orth)
-			drawBVH(tree, fmt.Sprintf("test%d-r.png", index))
-			fmt.Printf("%v\n", tree.String())
-		}
-	*/
 
 	ideal := getIdealTree()
 	if !ideal.Equals(tree) {
@@ -80,14 +36,37 @@ func TestAdd(t *testing.T) {
 
 func TestRemove(t *testing.T) {
 	tree := getIdealTree()
-	for index, orth := range leaf[:9] {
-		fmt.Printf("%d-r, %v\n", index, orth)
-		tree.Remove(orth)
-		drawBVH(tree, fmt.Sprintf("test%d-r.png", index))
-	}
-}
 
-func TestQuery(t *testing.T) {
+	// Reordering leaves to remove to test edge cases.
+	var to_remove [9]*Orthotope = [9]*Orthotope{
+		leaf[8],
+		leaf[0],
+		leaf[2],
+		leaf[1],
+		leaf[3],
+		leaf[4],
+		leaf[6],
+		leaf[5],
+		leaf[7],
+	}
+
+	scores := [9]int{233, 196, 173, 152, 112, 97, 77, 50, 10}
+
+	for index, orth := range to_remove {
+		if !tree.Remove(orth) {
+			t.Errorf("Unable to remove: %v\n", orth.String())
+		}
+		if scores[index] != tree.Score() {
+			drawBVH(tree, "error_remove_tree.png")
+			t.Errorf("Unexpected score: %d\nExpected: %d\nTree:\n%v", tree.Score(),
+				scores[index], tree.String())
+		}
+	}
+
+	if tree.Remove(leaf[0]) {
+		t.Errorf("Incorrectly removing non-existing volume: %v\n", leaf[0].String())
+	}
+
 }
 
 func getIdealTree() *BVol {
@@ -147,4 +126,38 @@ func getIdealTree() *BVol {
 		},
 	}
 	return tree
+}
+
+func drawBVH(BVol *BVol, name string) {
+	myimage := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{25, 25}})
+	iter := BVol.Iterator()
+	for iter.HasNext() {
+		next := iter.Next()
+
+		c := color.RGBA{uint8(255 / (next.depth + 1)), uint8(255 / (2*next.depth + 1)),
+			uint8(255), 255}
+		for y := next.orth.point[1]; y < next.orth.point[1]+next.orth.delta[1]; y += 1 {
+			myimage.Set(next.orth.point[0], y, c)
+			myimage.Set(next.orth.point[0]+next.orth.delta[0]-1, y, c)
+		}
+		for x := next.orth.point[0]; x < next.orth.point[0]+next.orth.delta[0]; x += 1 {
+			myimage.Set(x, next.orth.point[1], c)
+			myimage.Set(x, next.orth.point[1]+next.orth.delta[1]-1, c)
+		}
+	}
+	myfile, _ := os.Create(name)
+	png.Encode(myfile, myimage)
+}
+
+var leaf [10]*Orthotope = [10]*Orthotope{
+	&Orthotope{point: [d]int{2, 2}, delta: [d]int{2, 2}},
+	&Orthotope{point: [d]int{7, 7}, delta: [d]int{3, 3}},
+	&Orthotope{point: [d]int{19, 2}, delta: [d]int{2, 2}},
+	&Orthotope{point: [d]int{16, 6}, delta: [d]int{3, 4}},
+	&Orthotope{point: [d]int{10, 11}, delta: [d]int{2, 2}},
+	&Orthotope{point: [d]int{17, 12}, delta: [d]int{2, 2}},
+	&Orthotope{point: [d]int{20, 12}, delta: [d]int{2, 2}},
+	&Orthotope{point: [d]int{4, 16}, delta: [d]int{6, 6}},
+	&Orthotope{point: [d]int{18, 21}, delta: [d]int{2, 2}},
+	&Orthotope{point: [d]int{19, 19}, delta: [d]int{4, 6}},
 }

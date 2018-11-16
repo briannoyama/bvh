@@ -9,10 +9,10 @@ type orthStack struct {
 }
 
 func (s *orthStack) Reset() {
-	s.intStack[0] = 0
-	s.bvStack[0] = s.bvh
-	s.intStack = s.intStack[:1]
-	s.bvStack = s.bvStack[:1]
+	s.intStack = s.intStack[:0]
+	s.bvStack = s.bvStack[:0]
+	s.bvStack = append(s.bvStack, s.bvh)
+	s.intStack = append(s.intStack, 0)
 }
 
 func (s *orthStack) HasNext() bool {
@@ -104,17 +104,6 @@ func (s *orthStack) traceUp() bool {
 		bvol, index = s.peek()
 	}
 	return true
-}
-
-func (s *orthStack) upNext() bool {
-	s.pop()
-
-	// The end of the stack.
-	if s.HasNext() {
-		s.intStack[len(s.intStack)-1]++
-		return true
-	}
-	return false
 }
 
 func (s *orthStack) queryNext(o *Orthotope) *BVol {
@@ -232,7 +221,6 @@ func (s *orthStack) Remove(o *Orthotope) bool {
 				// Delete the node by replacing the parent.
 				gParent.vol[gIndex] = parent.vol[pIndex^1]
 				s.rebalanceRemove()
-				return true
 			} else {
 				// Delete the node by replacing the volume and children with cousin.
 				cousin := parent.vol[pIndex^1]
@@ -240,6 +228,7 @@ func (s *orthStack) Remove(o *Orthotope) bool {
 				parent.vol = cousin.vol
 				parent.depth = cousin.depth
 			}
+			return true
 		}
 	}
 	return false
