@@ -1,3 +1,4 @@
+//Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
 package rect
 
 import (
@@ -7,6 +8,16 @@ import (
 	"os"
 	"testing"
 )
+
+func TestTopDownBVH(t *testing.T) {
+	orths := make([]*Orthotope, len(leaf))
+	copy(orths, leaf[:])
+	tree := TopDownBVH(orths)
+	if tree.Score() > 262 {
+		t.Errorf("Ineeficient BVH created via TopDown:\n%v", tree.String())
+		drawBVH(tree, "error_ideal_tree.png")
+	}
+}
 
 func TestAdd(t *testing.T) {
 	scores := [9]int{26, 57, 77, 100, 120, 135, 188, 218, 247}

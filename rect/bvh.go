@@ -1,3 +1,4 @@
+//Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
 package rect
 
 import (
@@ -8,7 +9,7 @@ import (
 	disc "github.com/briannoyama/bvh/discreet"
 )
 
-//A Bounding Volume for orthotopes. Wraps the orthotope and .
+// A Bounding Volume for orthotopes. Wraps the orthotope and .
 type BVol struct {
 	vol   *Orthotope
 	desc  [2]*BVol
@@ -46,8 +47,8 @@ func (d byDimension) Less(i, j int) bool {
 			d.orths[j].delta[d.dimension])
 }
 
-// Creates a perfectly balanced BVH by recursively sorting and comparing bounds.
-func IdealBVH(orths []*Orthotope) *BVol {
+// Creates a balanced BVH by recursively halving, sorting and comparing vols.
+func TopDownBVH(orths []*Orthotope) *BVol {
 	if len(orths) == 1 {
 		return &BVol{vol: orths[0]}
 	}
@@ -55,7 +56,7 @@ func IdealBVH(orths []*Orthotope) *BVol {
 	comp2 := &Orthotope{}
 	mid := len(orths) / 2
 	low_dim := 0
-	low_score := math.MaxInt64
+	low_score := math.MaxInt32
 	for d := 0; d < DIMENSIONS; d++ {
 		sort.Sort(byDimension{orths: orths, dimension: d})
 		comp1.MinBounds(orths[:mid]...)
@@ -70,7 +71,7 @@ func IdealBVH(orths []*Orthotope) *BVol {
 		sort.Sort(byDimension{orths: orths, dimension: low_dim})
 	}
 	bvol := &BVol{vol: comp1,
-		desc: [2]*BVol{IdealBVH(orths[:mid]), IdealBVH(orths[:mid])}}
+		desc: [2]*BVol{TopDownBVH(orths[:mid]), TopDownBVH(orths[mid:])}}
 	bvol.redepth()
 	bvol.minBound()
 	return bvol

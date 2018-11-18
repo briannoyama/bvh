@@ -1,3 +1,4 @@
+//Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
 package discreet
 
 // Works for 32 bit or smaller ints.
