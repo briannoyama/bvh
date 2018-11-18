@@ -1,29 +1,79 @@
 package rect
 
 import (
+	"math"
+	"sort"
 	"strings"
 
 	disc "github.com/briannoyama/bvh/discreet"
 )
 
-//"math"
-//"strings"
-
 //A Bounding Volume for orthotopes. Wraps the orthotope and .
 type BVol struct {
-	orth  *Orthotope
-	vol   [2]*BVol
+	vol   *Orthotope
+	desc  [2]*BVol
 	depth int
 }
 
 func (bvol *BVol) minBound() {
 	if bvol.depth > 0 {
-		bvol.orth.MinBounds(bvol.vol[0].orth, bvol.vol[1].orth)
+		bvol.vol.MinBounds(bvol.desc[0].vol, bvol.desc[1].vol)
 	}
 }
 
 func (bvol *BVol) redepth() {
-	bvol.depth = disc.Max(bvol.vol[0].depth, bvol.vol[1].depth) + 1
+	bvol.depth = disc.Max(bvol.desc[0].depth, bvol.desc[1].depth) + 1
+}
+
+type byDimension struct {
+	orths     []*Orthotope
+	dimension int
+}
+
+func (d byDimension) Len() int {
+	return len(d.orths)
+}
+
+func (d byDimension) Swap(i, j int) {
+	d.orths[i], d.orths[j] = d.orths[j], d.orths[i]
+}
+
+// Compare the midpoints along a dimension
+func (d byDimension) Less(i, j int) bool {
+	return (d.orths[i].point[d.dimension] +
+		d.orths[i].delta[d.dimension]) <
+		(d.orths[j].point[d.dimension] +
+			d.orths[j].delta[d.dimension])
+}
+
+// Creates a perfectly balanced BVH by recursively sorting and comparing bounds.
+func IdealBVH(orths []*Orthotope) *BVol {
+	if len(orths) == 1 {
+		return &BVol{vol: orths[0]}
+	}
+	comp1 := &Orthotope{}
+	comp2 := &Orthotope{}
+	mid := len(orths) / 2
+	low_dim := 0
+	low_score := math.MaxInt64
+	for d := 0; d < DIMENSIONS; d++ {
+		sort.Sort(byDimension{orths: orths, dimension: d})
+		comp1.MinBounds(orths[:mid]...)
+		comp2.MinBounds(orths[mid:]...)
+		score := comp1.Score() + comp2.Score()
+		if score < low_score {
+			low_score = score
+			low_dim = d
+		}
+	}
+	if low_dim < DIMENSIONS-1 {
+		sort.Sort(byDimension{orths: orths, dimension: low_dim})
+	}
+	bvol := &BVol{vol: comp1,
+		desc: [2]*BVol{IdealBVH(orths[:mid]), IdealBVH(orths[:mid])}}
+	bvol.redepth()
+	bvol.minBound()
+	return bvol
 }
 
 // Get an iterator for each volume in a Bounding Volume Hierarhcy.
@@ -50,12 +100,12 @@ func (bvol *BVol) Score() int {
 
 // Rebalances the children of a given volume.
 func (bvol *BVol) redistribute() {
-	if bvol.vol[1].depth > bvol.vol[0].depth {
-		swapCheck(bvol.vol[1], bvol, 0)
-	} else if bvol.vol[1].depth < bvol.vol[0].depth {
-		swapCheck(bvol.vol[0], bvol, 1)
-	} else if bvol.vol[1].depth > 0 {
-		swapCheck(bvol.vol[0], bvol.vol[1], 1)
+	if bvol.desc[1].depth > bvol.desc[0].depth {
+		swapCheck(bvol.desc[1], bvol, 0)
+	} else if bvol.desc[1].depth < bvol.desc[0].depth {
+		swapCheck(bvol.desc[0], bvol, 1)
+	} else if bvol.desc[1].depth > 0 {
+		swapCheck(bvol.desc[0], bvol.desc[1], 1)
 	}
 	bvol.redepth()
 }
@@ -63,19 +113,19 @@ func (bvol *BVol) redistribute() {
 func swapCheck(first *BVol, second *BVol, secIndex int) {
 	first.minBound()
 	second.minBound()
-	minScore := first.orth.Score() + second.orth.Score()
+	minScore := first.vol.Score() + second.vol.Score()
 	minIndex := -1
 
 	for index := 0; index < 2; index++ {
-		first.vol[index], second.vol[secIndex] =
-			second.vol[secIndex], first.vol[index]
+		first.desc[index], second.desc[secIndex] =
+			second.desc[secIndex], first.desc[index]
 
 			// Ensure that swap did not unbalance second.
-		if disc.Abs(second.vol[0].depth-second.vol[1].depth) < 2 {
+		if disc.Abs(second.desc[0].depth-second.desc[1].depth) < 2 {
 			// Score first then second, since first may be a child of second.
 			first.minBound()
 			second.minBound()
-			score := first.orth.Score() + second.orth.Score()
+			score := first.vol.Score() + second.vol.Score()
 			if score < minScore {
 				// Update the children with the best split
 				minScore = score
@@ -85,8 +135,8 @@ func swapCheck(first *BVol, second *BVol, secIndex int) {
 	}
 
 	if minIndex < 1 {
-		first.vol[minIndex+1], second.vol[secIndex] =
-			second.vol[secIndex], first.vol[minIndex+1]
+		first.desc[minIndex+1], second.desc[secIndex] =
+			second.desc[secIndex], first.desc[minIndex+1]
 
 		// Recalculate bounding volume
 		first.minBound()
@@ -100,10 +150,10 @@ func swapCheck(first *BVol, second *BVol, secIndex int) {
 
 //Recursive algorithm for comparing BVHs
 func (bvh *BVol) Equals(other *BVol) bool {
-	return (bvh.depth == 0 && other.depth == 0 && bvh.orth == other.orth) ||
-		(bvh.depth > 0 && other.depth > 0 && bvh.orth.Equals(other.orth) &&
-			((bvh.vol[0].Equals(other.vol[0]) && bvh.vol[1].Equals(other.vol[1])) ||
-				(bvh.vol[1].Equals(other.vol[0]) && bvh.vol[0].Equals(other.vol[1]))))
+	return (bvh.depth == 0 && other.depth == 0 && bvh.vol == other.vol) ||
+		(bvh.depth > 0 && other.depth > 0 && bvh.vol.Equals(other.vol) &&
+			((bvh.desc[0].Equals(other.desc[0]) && bvh.desc[1].Equals(other.desc[1])) ||
+				(bvh.desc[1].Equals(other.desc[0]) && bvh.desc[0].Equals(other.desc[1]))))
 
 }
 
@@ -116,7 +166,7 @@ func (bvh *BVol) String() string {
 	for iter.HasNext() {
 		next := iter.Next()
 		toPrint = append(toPrint, strings.Repeat(" ", int(maxDepth-next.depth)))
-		toPrint = append(toPrint, next.orth.String()+"\n")
+		toPrint = append(toPrint, next.vol.String()+"\n")
 	}
 
 	return strings.Join(toPrint, "")

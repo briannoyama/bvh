@@ -8,9 +8,9 @@ import (
 const d = DIMENSIONS
 
 func TestOverlaps(t *testing.T) {
-	o1 := &Orthotope{point: [d]int{10, -20, 30}, delta: [d]int{30, 30, 30}}
-	o2 := &Orthotope{point: [d]int{-10, 5, 15}, delta: [d]int{30, 30, 30}}
-	o3 := &Orthotope{point: [d]int{-10, 25, -15}, delta: [d]int{30, 30, 30}}
+	o1 := &Orthotope{point: [d]int{10, -20}, delta: [d]int{30, 30}}
+	o2 := &Orthotope{point: [d]int{-10, 5}, delta: [d]int{30, 30}}
+	o3 := &Orthotope{point: [d]int{-10, 25}, delta: [d]int{30, 30}}
 
 	overlaps := o1.Overlaps(o2)
 	if !overlaps {
@@ -24,9 +24,9 @@ func TestOverlaps(t *testing.T) {
 }
 
 func TestContains(t *testing.T) {
-	o1 := &Orthotope{point: [d]int{10, -20, 30}, delta: [d]int{30, 30, 30}}
-	o2 := &Orthotope{point: [d]int{15, -20, 40}, delta: [d]int{20, 20, 20}}
-	o3 := &Orthotope{point: [d]int{-10, 5, 15}, delta: [d]int{30, 30, 30}}
+	o1 := &Orthotope{point: [d]int{10, -20}, delta: [d]int{30, 30}}
+	o2 := &Orthotope{point: [d]int{15, -20}, delta: [d]int{20, 20}}
+	o3 := &Orthotope{point: [d]int{-10, 5}, delta: [d]int{30, 30}}
 
 	contains := o1.Contains(o2)
 	if !contains {
@@ -45,21 +45,21 @@ func TestContains(t *testing.T) {
 }
 
 func TestScore(t *testing.T) {
-	o := &Orthotope{point: [d]int{10, -20, 30}, delta: [d]int{30, 15, 10}}
+	o := &Orthotope{point: [d]int{10, -20}, delta: [d]int{30, 15}}
 
 	score := o.Score()
-	expected := 55
+	expected := 45
 	if score != expected {
 		t.Errorf("Expected %v, got %v.", expected, score)
 	}
 }
 
 func TestIntersects(t *testing.T) {
-	o1 := &Orthotope{point: [d]int{10, 15, 12}, delta: [d]int{20, 10, 10}}
-	o2 := &Orthotope{point: [d]int{55, 65, 70}, delta: [d]int{20, 20, 20}}
-	o3 := &Orthotope{point: [d]int{-20, 25, 55}, delta: [d]int{30, 20, 30}}
+	o1 := &Orthotope{point: [d]int{10, 15}, delta: [d]int{20, 10}}
+	o2 := &Orthotope{point: [d]int{55, 65}, delta: [d]int{20, 20}}
+	o3 := &Orthotope{point: [d]int{-20, 25}, delta: [d]int{30, 20}}
 
-	vector := &Orthotope{point: [d]int{5, 5, 5}, delta: [d]int{10, 10, 10}}
+	vector := &Orthotope{point: [d]int{5, 5}, delta: [d]int{10, 10}}
 
 	t1 := vector.Intersects(o1)
 	t2 := vector.Intersects(o2)
@@ -77,13 +77,13 @@ func TestIntersects(t *testing.T) {
 }
 
 func TestMinBounds(t *testing.T) {
-	o1 := &Orthotope{point: [d]int{10, -20, 30}, delta: [d]int{30, 30, 30}}
-	o2Orig := &Orthotope{point: [d]int{15, -20, 40}, delta: [d]int{20, 20, 20}}
-	o2 := &Orthotope{point: [d]int{15, -20, 40}, delta: [d]int{20, 20, 20}}
-	o3 := &Orthotope{point: [d]int{-10, 5, 15}, delta: [d]int{30, 30, 30}}
+	o1 := &Orthotope{point: [d]int{10, -20}, delta: [d]int{30, 30}}
+	o2Orig := &Orthotope{point: [d]int{15, -20}, delta: [d]int{20, 20}}
+	o2 := &Orthotope{point: [d]int{15, -20}, delta: [d]int{20, 20}}
+	o3 := &Orthotope{point: [d]int{-10, 5}, delta: [d]int{30, 30}}
 
 	o1.MinBounds(o2, o3)
-	expected := &Orthotope{point: [d]int{-10, -20, 15}, delta: [d]int{45, 55, 45}}
+	expected := &Orthotope{point: [d]int{-10, -20}, delta: [d]int{45, 55}}
 
 	if !reflect.DeepEqual(o1, expected) {
 		t.Errorf("Expected %v and %v doesn't match.", o1,
@@ -95,9 +95,28 @@ func TestMinBounds(t *testing.T) {
 }
 
 func TestOrthString(t *testing.T) {
-	o1 := &Orthotope{point: [d]int{10, -20, 30}, delta: [d]int{30, 30, 30}}
+	o1 := &Orthotope{point: [d]int{10, -20}, delta: [d]int{30, 30}}
 
-	if o1.String() != "Point [10 -20 30], Delta [30 30 30]" {
+	if o1.String() != "Point [10 -20], Delta [30 30]" {
 		t.Errorf("String method not working: %v", o1)
+	}
+}
+
+func TestOrthEquals(t *testing.T) {
+	o1 := &Orthotope{point: [d]int{10, -20}, delta: [d]int{30, 30}}
+	o2 := &Orthotope{point: [d]int{10, -20}, delta: [d]int{30, 30}}
+	o3 := &Orthotope{point: [d]int{10, -5}, delta: [d]int{30, 20}}
+	o4 := &Orthotope{point: [d]int{10, -5}, delta: [d]int{30, 25}}
+
+	if !o1.Equals(o2) {
+		t.Errorf("%v should equal %v", o1, o2)
+	}
+
+	if o1.Equals(o3) {
+		t.Errorf("%v should not equal %v", o1, o2)
+	}
+
+	if o4.Equals(o3) {
+		t.Errorf("%v should not equal %v", o1, o2)
 	}
 }

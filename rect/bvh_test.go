@@ -11,7 +11,7 @@ import (
 func TestAdd(t *testing.T) {
 	scores := [9]int{26, 57, 77, 100, 120, 135, 188, 218, 247}
 
-	tree := &BVol{orth: leaf[0]}
+	tree := &BVol{vol: leaf[0]}
 	for index, orth := range leaf[1:] {
 		if !tree.Add(orth) {
 			t.Errorf("Unable to add: %v\n", orth.String())
@@ -69,35 +69,64 @@ func TestRemove(t *testing.T) {
 
 }
 
+func TestString(t *testing.T) {
+	tree := getIdealTree()
+	expectedString :=
+		"Point [2 2], Delta [21 23]\n" +
+			" Point [16 2], Delta [7 23]\n" +
+			"   Point [18 19], Delta [5 6]\n" +
+			"    Point [18 21], Delta [2 2]\n" +
+			"    Point [19 19], Delta [4 6]\n" +
+			"  Point [16 2], Delta [6 12]\n" +
+			"   Point [16 2], Delta [5 8]\n" +
+			"    Point [19 2], Delta [2 2]\n" +
+			"    Point [16 6], Delta [3 4]\n" +
+			"   Point [17 12], Delta [5 2]\n" +
+			"    Point [20 12], Delta [2 2]\n" +
+			"    Point [17 12], Delta [2 2]\n" +
+			"  Point [2 2], Delta [10 20]\n" +
+			"   Point [4 11], Delta [8 11]\n" +
+			"    Point [10 11], Delta [2 2]\n" +
+			"    Point [4 16], Delta [6 6]\n" +
+			"   Point [2 2], Delta [8 8]\n" +
+			"    Point [7 7], Delta [3 3]\n" +
+			"    Point [2 2], Delta [2 2]\n"
+	actual := tree.String()
+	if actual != expectedString {
+		t.Errorf("Actual string:\n%v\n...doesn't match expected:\n%v\n",
+			actual, expectedString)
+	}
+}
+
 func getIdealTree() *BVol {
 	tree := &BVol{depth: 4,
-		orth: &Orthotope{point: [d]int{2, 2}, delta: [d]int{21, 23}},
-		vol: [2]*BVol{
+		vol: &Orthotope{point: [d]int{2, 2}, delta: [d]int{21, 23}},
+		desc: [2]*BVol{
 			&BVol{depth: 3,
-				orth: &Orthotope{point: [d]int{16, 2}, delta: [d]int{7, 23}},
-				vol: [2]*BVol{
+				vol: &Orthotope{point: [d]int{16, 2}, delta: [d]int{7, 23}},
+				desc: [2]*BVol{
 					&BVol{depth: 1,
-						orth: &Orthotope{point: [d]int{18, 19}, delta: [d]int{5, 6}},
-						vol: [2]*BVol{
-							&BVol{orth: leaf[8]},
-							&BVol{orth: leaf[9]},
+						vol: &Orthotope{point: [d]int{18, 19}, delta: [d]int{5, 6}},
+						desc: [2]*BVol{
+							&BVol{vol: leaf[8]},
+							&BVol{vol: leaf[9]},
 						},
 					},
 					&BVol{depth: 2,
-						orth: &Orthotope{point: [d]int{16, 2}, delta: [d]int{6, 12}},
-						vol: [2]*BVol{
+						vol: &Orthotope{point: [d]int{16, 2}, delta: [d]int{6, 12}},
+						desc: [2]*BVol{
 							&BVol{depth: 1,
-								orth: &Orthotope{point: [d]int{16, 2}, delta: [d]int{5, 8}},
-								vol: [2]*BVol{
-									&BVol{orth: leaf[2]},
-									&BVol{orth: leaf[3]},
+								vol: &Orthotope{point: [d]int{16, 2}, delta: [d]int{5, 8}},
+								desc: [2]*BVol{
+									&BVol{vol: leaf[2]},
+									&BVol{vol: leaf[3]},
 								},
 							},
 							&BVol{depth: 1,
-								orth: &Orthotope{point: [d]int{17, 12}, delta: [d]int{5, 2}},
-								vol: [2]*BVol{
-									&BVol{orth: leaf[6]},
-									&BVol{orth: leaf[5]},
+								vol: &Orthotope{point: [d]int{17, 12}, delta: [d]int{5, 2}},
+								desc: [2]*BVol{
+									&BVol{vol: leaf[6]},
+									&BVol{vol: leaf[5]},
 								},
 							},
 						},
@@ -105,20 +134,20 @@ func getIdealTree() *BVol {
 				},
 			},
 			&BVol{depth: 2,
-				orth: &Orthotope{point: [d]int{2, 2}, delta: [d]int{10, 20}},
-				vol: [2]*BVol{
+				vol: &Orthotope{point: [d]int{2, 2}, delta: [d]int{10, 20}},
+				desc: [2]*BVol{
 					&BVol{depth: 1,
-						orth: &Orthotope{point: [d]int{4, 11}, delta: [d]int{8, 11}},
-						vol: [2]*BVol{
-							&BVol{orth: leaf[4]},
-							&BVol{orth: leaf[7]},
+						vol: &Orthotope{point: [d]int{4, 11}, delta: [d]int{8, 11}},
+						desc: [2]*BVol{
+							&BVol{vol: leaf[4]},
+							&BVol{vol: leaf[7]},
 						},
 					},
 					&BVol{depth: 1,
-						orth: &Orthotope{point: [d]int{2, 2}, delta: [d]int{8, 8}},
-						vol: [2]*BVol{
-							&BVol{orth: leaf[1]},
-							&BVol{orth: leaf[0]},
+						vol: &Orthotope{point: [d]int{2, 2}, delta: [d]int{8, 8}},
+						desc: [2]*BVol{
+							&BVol{vol: leaf[1]},
+							&BVol{vol: leaf[0]},
 						},
 					},
 				},
@@ -136,13 +165,13 @@ func drawBVH(BVol *BVol, name string) {
 
 		c := color.RGBA{uint8(255 / (next.depth + 1)), uint8(255 / (2*next.depth + 1)),
 			uint8(255), 255}
-		for y := next.orth.point[1]; y < next.orth.point[1]+next.orth.delta[1]; y += 1 {
-			myimage.Set(next.orth.point[0], y, c)
-			myimage.Set(next.orth.point[0]+next.orth.delta[0]-1, y, c)
+		for y := next.vol.point[1]; y < next.vol.point[1]+next.vol.delta[1]; y += 1 {
+			myimage.Set(next.vol.point[0], y, c)
+			myimage.Set(next.vol.point[0]+next.vol.delta[0]-1, y, c)
 		}
-		for x := next.orth.point[0]; x < next.orth.point[0]+next.orth.delta[0]; x += 1 {
-			myimage.Set(x, next.orth.point[1], c)
-			myimage.Set(x, next.orth.point[1]+next.orth.delta[1]-1, c)
+		for x := next.vol.point[0]; x < next.vol.point[0]+next.vol.delta[0]; x += 1 {
+			myimage.Set(x, next.vol.point[1], c)
+			myimage.Set(x, next.vol.point[1]+next.vol.delta[1]-1, c)
 		}
 	}
 	myfile, _ := os.Create(name)

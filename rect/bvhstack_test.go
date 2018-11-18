@@ -7,26 +7,26 @@ import (
 func TestNext(t *testing.T) {
 	bvs := []*BVol{
 		&BVol{
-			orth: &Orthotope{
+			vol: &Orthotope{
 				point: [DIMENSIONS]int{2, 2},
 				delta: [DIMENSIONS]int{8, 8},
 			},
 		},
 		&BVol{
-			orth: &Orthotope{
+			vol: &Orthotope{
 				point: [DIMENSIONS]int{2, 2},
 				delta: [DIMENSIONS]int{2, 2},
 			},
 		},
 		&BVol{
-			orth: &Orthotope{
+			vol: &Orthotope{
 				point: [DIMENSIONS]int{7, 7},
 				delta: [DIMENSIONS]int{3, 3},
 			},
 		},
 	}
 
-	bvs[0].vol = [2]*BVol{bvs[1], bvs[2]}
+	bvs[0].desc = [2]*BVol{bvs[1], bvs[2]}
 	bvs[0].depth = 1
 
 	iter := bvs[0].Iterator()
@@ -40,10 +40,86 @@ func TestNext(t *testing.T) {
 }
 
 func TestQuery(t *testing.T) {
+	tree := getIdealTree()
+	query := [5]*Orthotope{
+		&Orthotope{point: [d]int{11, 12}, delta: [d]int{0, 0}},
+		&Orthotope{point: [d]int{14, 15}, delta: [d]int{0, 0}},
+		&Orthotope{point: [d]int{-2, -2}, delta: [d]int{30, 30}},
+		&Orthotope{point: [d]int{30, 30}, delta: [d]int{30, 30}},
+		&Orthotope{point: [d]int{17, 9}, delta: [d]int{5, 5}},
+	}
+	results := [5][]*Orthotope{
+		{leaf[4]},
+		{},
+		make([]*Orthotope, len(leaf)),
+		{},
+		{leaf[3], leaf[5], leaf[6]},
+	}
+	// For the second test, copy contents of leaf.
+	copy(results[2], leaf[:])
+
+	for in, q := range query {
+		iter := tree.Iterator()
+		iter.Reset()
+		for r := iter.Query(q); r != nil; r = iter.Query(q) {
+			found := 0
+			for _, orth := range results[in] {
+				if r == orth {
+					break
+				}
+				found++
+			}
+			if found < len(results[in]) {
+				results[in] = append(results[in][:found], results[in][found+1:]...)
+			} else {
+				t.Errorf("Querying %v returned unexpected value: %v\n",
+					q.String(), r.String())
+			}
+		}
+		for _, orth := range results[in] {
+			t.Errorf("Querying %v did not return %v\n", q.String(), orth.String())
+		}
+	}
 }
 
 func TestTrace(t *testing.T) {
-	//tree := getIdealTree()
+	tree := getIdealTree()
+	query := [5]*Orthotope{
+		&Orthotope{point: [d]int{-2, 0}, delta: [d]int{4, 2}},
+		&Orthotope{point: [d]int{14, 11}, delta: [d]int{-1, 0}},
+		&Orthotope{point: [d]int{7, 20}, delta: [d]int{4, -5}},
+		&Orthotope{point: [d]int{30, 30}, delta: [d]int{-1, -1}},
+		&Orthotope{point: [d]int{0, 40}, delta: [d]int{5, -1}},
+	}
+	results := [5][]*Orthotope{
+		{leaf[0], leaf[3]},
+		{leaf[4]},
+		{leaf[7], leaf[3], leaf[2]},
+		{leaf[9], leaf[4], leaf[1], leaf[0]},
+		{},
+	}
+
+	for in, q := range query {
+		iter := tree.Iterator()
+		iter.Reset()
+		prev_dist := 0
+		for r, dist := iter.Trace(q); r != nil; r, dist = iter.Trace(q) {
+			if dist < prev_dist {
+				t.Errorf("Tracing %v returned a distance out of order: %d < %d\n",
+					q.String(), dist, prev_dist)
+			}
+			prev_dist = dist
+			if len(results[in]) > 0 && results[in][0] == r {
+				results[in] = results[in][1:]
+			} else {
+				t.Errorf("Tracing %v returned unexpected or out of order value: %v\n",
+					q.String(), r.String())
+			}
+		}
+		for _, orth := range results[in] {
+			t.Errorf("Tracing %v did not return %v\n", q.String(), orth.String())
+		}
+	}
 }
 
 func TestBVHContains(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	disc "github.com/briannoyama/bvh/discreet"
 )
 
-const DIMENSIONS int = 3
+const DIMENSIONS int = 2
 
 type Orthotope struct {
 	point [DIMENSIONS]int
@@ -36,7 +36,7 @@ func (o *Orthotope) Contains(orth *Orthotope) bool {
 	return contains
 }
 
-/*Let orth represent a direction (a vector whose delta orients the vector).
+/*Let orth represent a direction (a vector where delta defines direction).
  *Return t > 0 for where it intersects, or -1 if it does not intersect.
  */
 func (orth *Orthotope) Intersects(o *Orthotope) int {
@@ -45,11 +45,21 @@ func (orth *Orthotope) Intersects(o *Orthotope) int {
 	for index, p0 := range o.point {
 		p1 := o.delta[index] + p0
 
-		p0_t := ((p0 - orth.point[index]) << ACCURACY) / orth.delta[index]
-		in_t = disc.Max(in_t, p0_t)
+		if orth.delta[index] == 0 {
+			if orth.point[index] < p0 || p1 < orth.point[index] {
+				return -1
+			}
+		} else {
+			if orth.delta[index] < 0 {
+				// Swap p0 and p1 for negative directions.
+				p0, p1 = p1, p0
+			}
+			p0_t := ((p0 - orth.point[index]) << ACCURACY) / orth.delta[index]
+			in_t = disc.Max(in_t, p0_t)
 
-		p1_t := ((p1 - orth.point[index]) << ACCURACY) / orth.delta[index]
-		out_t = disc.Min(out_t, p1_t)
+			p1_t := ((p1 - orth.point[index]) << ACCURACY) / orth.delta[index]
+			out_t = disc.Min(out_t, p1_t)
+		}
 	}
 
 	if in_t < out_t && in_t >= 0 {
