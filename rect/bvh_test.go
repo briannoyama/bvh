@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"image/png"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -103,7 +104,7 @@ func TestString(t *testing.T) {
 			"    Point [7 7], Delta [3 3]\n" +
 			"    Point [2 2], Delta [2 2]\n"
 	actual := tree.String()
-	if actual != expectedString {
+	if strings.Replace(actual, " 0", "", -1) != expectedString {
 		t.Errorf("Actual string:\n%v\n...doesn't match expected:\n%v\n",
 			actual, expectedString)
 	}
@@ -111,30 +112,30 @@ func TestString(t *testing.T) {
 
 func getIdealTree() *BVol {
 	tree := &BVol{depth: 4,
-		vol: &Orthotope{point: [d]int{2, 2}, delta: [d]int{21, 23}},
+		vol: &Orthotope{Point: [d]int{2, 2}, Delta: [d]int{21, 23}},
 		desc: [2]*BVol{
 			&BVol{depth: 3,
-				vol: &Orthotope{point: [d]int{16, 2}, delta: [d]int{7, 23}},
+				vol: &Orthotope{Point: [d]int{16, 2}, Delta: [d]int{7, 23}},
 				desc: [2]*BVol{
 					&BVol{depth: 1,
-						vol: &Orthotope{point: [d]int{18, 19}, delta: [d]int{5, 6}},
+						vol: &Orthotope{Point: [d]int{18, 19}, Delta: [d]int{5, 6}},
 						desc: [2]*BVol{
 							&BVol{vol: leaf[8]},
 							&BVol{vol: leaf[9]},
 						},
 					},
 					&BVol{depth: 2,
-						vol: &Orthotope{point: [d]int{16, 2}, delta: [d]int{6, 12}},
+						vol: &Orthotope{Point: [d]int{16, 2}, Delta: [d]int{6, 12}},
 						desc: [2]*BVol{
 							&BVol{depth: 1,
-								vol: &Orthotope{point: [d]int{16, 2}, delta: [d]int{5, 8}},
+								vol: &Orthotope{Point: [d]int{16, 2}, Delta: [d]int{5, 8}},
 								desc: [2]*BVol{
 									&BVol{vol: leaf[2]},
 									&BVol{vol: leaf[3]},
 								},
 							},
 							&BVol{depth: 1,
-								vol: &Orthotope{point: [d]int{17, 12}, delta: [d]int{5, 2}},
+								vol: &Orthotope{Point: [d]int{17, 12}, Delta: [d]int{5, 2}},
 								desc: [2]*BVol{
 									&BVol{vol: leaf[6]},
 									&BVol{vol: leaf[5]},
@@ -145,17 +146,17 @@ func getIdealTree() *BVol {
 				},
 			},
 			&BVol{depth: 2,
-				vol: &Orthotope{point: [d]int{2, 2}, delta: [d]int{10, 20}},
+				vol: &Orthotope{Point: [d]int{2, 2}, Delta: [d]int{10, 20}},
 				desc: [2]*BVol{
 					&BVol{depth: 1,
-						vol: &Orthotope{point: [d]int{4, 11}, delta: [d]int{8, 11}},
+						vol: &Orthotope{Point: [d]int{4, 11}, Delta: [d]int{8, 11}},
 						desc: [2]*BVol{
 							&BVol{vol: leaf[4]},
 							&BVol{vol: leaf[7]},
 						},
 					},
 					&BVol{depth: 1,
-						vol: &Orthotope{point: [d]int{2, 2}, delta: [d]int{8, 8}},
+						vol: &Orthotope{Point: [d]int{2, 2}, Delta: [d]int{8, 8}},
 						desc: [2]*BVol{
 							&BVol{vol: leaf[1]},
 							&BVol{vol: leaf[0]},
@@ -176,13 +177,13 @@ func drawBVH(BVol *BVol, name string) {
 
 		c := color.RGBA{uint8(255 / (next.depth + 1)), uint8(255 / (2*next.depth + 1)),
 			uint8(255), 255}
-		for y := next.vol.point[1]; y < next.vol.point[1]+next.vol.delta[1]; y += 1 {
-			myimage.Set(next.vol.point[0], y, c)
-			myimage.Set(next.vol.point[0]+next.vol.delta[0]-1, y, c)
+		for y := next.vol.Point[1]; y < next.vol.Point[1]+next.vol.Delta[1]; y += 1 {
+			myimage.Set(next.vol.Point[0], y, c)
+			myimage.Set(next.vol.Point[0]+next.vol.Delta[0]-1, y, c)
 		}
-		for x := next.vol.point[0]; x < next.vol.point[0]+next.vol.delta[0]; x += 1 {
-			myimage.Set(x, next.vol.point[1], c)
-			myimage.Set(x, next.vol.point[1]+next.vol.delta[1]-1, c)
+		for x := next.vol.Point[0]; x < next.vol.Point[0]+next.vol.Delta[0]; x += 1 {
+			myimage.Set(x, next.vol.Point[1], c)
+			myimage.Set(x, next.vol.Point[1]+next.vol.Delta[1]-1, c)
 		}
 	}
 	myfile, _ := os.Create(name)
@@ -190,14 +191,14 @@ func drawBVH(BVol *BVol, name string) {
 }
 
 var leaf [10]*Orthotope = [10]*Orthotope{
-	&Orthotope{point: [d]int{2, 2}, delta: [d]int{2, 2}},
-	&Orthotope{point: [d]int{7, 7}, delta: [d]int{3, 3}},
-	&Orthotope{point: [d]int{19, 2}, delta: [d]int{2, 2}},
-	&Orthotope{point: [d]int{16, 6}, delta: [d]int{3, 4}},
-	&Orthotope{point: [d]int{10, 11}, delta: [d]int{2, 2}},
-	&Orthotope{point: [d]int{17, 12}, delta: [d]int{2, 2}},
-	&Orthotope{point: [d]int{20, 12}, delta: [d]int{2, 2}},
-	&Orthotope{point: [d]int{4, 16}, delta: [d]int{6, 6}},
-	&Orthotope{point: [d]int{18, 21}, delta: [d]int{2, 2}},
-	&Orthotope{point: [d]int{19, 19}, delta: [d]int{4, 6}},
+	&Orthotope{Point: [d]int{2, 2}, Delta: [d]int{2, 2}},
+	&Orthotope{Point: [d]int{7, 7}, Delta: [d]int{3, 3}},
+	&Orthotope{Point: [d]int{19, 2}, Delta: [d]int{2, 2}},
+	&Orthotope{Point: [d]int{16, 6}, Delta: [d]int{3, 4}},
+	&Orthotope{Point: [d]int{10, 11}, Delta: [d]int{2, 2}},
+	&Orthotope{Point: [d]int{17, 12}, Delta: [d]int{2, 2}},
+	&Orthotope{Point: [d]int{20, 12}, Delta: [d]int{2, 2}},
+	&Orthotope{Point: [d]int{4, 16}, Delta: [d]int{6, 6}},
+	&Orthotope{Point: [d]int{18, 21}, Delta: [d]int{2, 2}},
+	&Orthotope{Point: [d]int{19, 19}, Delta: [d]int{4, 6}},
 }

@@ -9,20 +9,20 @@ func TestNext(t *testing.T) {
 	bvs := []*BVol{
 		&BVol{
 			vol: &Orthotope{
-				point: [DIMENSIONS]int{2, 2},
-				delta: [DIMENSIONS]int{8, 8},
+				Point: [DIMENSIONS]int{2, 2},
+				Delta: [DIMENSIONS]int{8, 8},
 			},
 		},
 		&BVol{
 			vol: &Orthotope{
-				point: [DIMENSIONS]int{2, 2},
-				delta: [DIMENSIONS]int{2, 2},
+				Point: [DIMENSIONS]int{2, 2},
+				Delta: [DIMENSIONS]int{2, 2},
 			},
 		},
 		&BVol{
 			vol: &Orthotope{
-				point: [DIMENSIONS]int{7, 7},
-				delta: [DIMENSIONS]int{3, 3},
+				Point: [DIMENSIONS]int{7, 7},
+				Delta: [DIMENSIONS]int{3, 3},
 			},
 		},
 	}
@@ -43,11 +43,11 @@ func TestNext(t *testing.T) {
 func TestQuery(t *testing.T) {
 	tree := getIdealTree()
 	query := [5]*Orthotope{
-		&Orthotope{point: [d]int{11, 12}, delta: [d]int{0, 0}},
-		&Orthotope{point: [d]int{14, 15}, delta: [d]int{0, 0}},
-		&Orthotope{point: [d]int{-2, -2}, delta: [d]int{30, 30}},
-		&Orthotope{point: [d]int{30, 30}, delta: [d]int{30, 30}},
-		&Orthotope{point: [d]int{17, 9}, delta: [d]int{5, 5}},
+		&Orthotope{Point: [d]int{11, 12}, Delta: [d]int{0, 0}},
+		&Orthotope{Point: [d]int{14, 15}, Delta: [d]int{0, 0}},
+		&Orthotope{Point: [d]int{-2, -2}, Delta: [d]int{30, 30}},
+		&Orthotope{Point: [d]int{30, 30}, Delta: [d]int{30, 30}},
+		&Orthotope{Point: [d]int{17, 9}, Delta: [d]int{5, 5}},
 	}
 	results := [5][]*Orthotope{
 		{leaf[4]},
@@ -86,11 +86,11 @@ func TestQuery(t *testing.T) {
 func TestTrace(t *testing.T) {
 	tree := getIdealTree()
 	query := [5]*Orthotope{
-		&Orthotope{point: [d]int{-2, 0}, delta: [d]int{4, 2}},
-		&Orthotope{point: [d]int{14, 11}, delta: [d]int{-1, 0}},
-		&Orthotope{point: [d]int{7, 20}, delta: [d]int{4, -5}},
-		&Orthotope{point: [d]int{30, 30}, delta: [d]int{-1, -1}},
-		&Orthotope{point: [d]int{0, 40}, delta: [d]int{5, -1}},
+		&Orthotope{Point: [d]int{-2, 0}, Delta: [d]int{4, 2}},
+		&Orthotope{Point: [d]int{14, 11}, Delta: [d]int{-1, 0}},
+		&Orthotope{Point: [d]int{7, 20}, Delta: [d]int{4, -5}},
+		&Orthotope{Point: [d]int{30, 30}, Delta: [d]int{-1, -1}},
+		&Orthotope{Point: [d]int{0, 40}, Delta: [d]int{5, -1}},
 	}
 	results := [5][]*Orthotope{
 		{leaf[0], leaf[3]},
@@ -129,8 +129,8 @@ func TestBVHContains(t *testing.T) {
 	var to_check [4]*Orthotope = [4]*Orthotope{
 		leaf[2],
 		leaf[7],
-		&Orthotope{point: [d]int{100, 20}, delta: [d]int{8, 9}},
-		&Orthotope{point: [d]int{19, 2}, delta: [d]int{2, 2}}, // Similar to leaf[2]
+		&Orthotope{Point: [d]int{100, 20}, Delta: [d]int{8, 9}},
+		&Orthotope{Point: [d]int{19, 2}, Delta: [d]int{2, 2}}, // Similar to leaf[2]
 	}
 
 	contains := [4]bool{true, true, false, false}

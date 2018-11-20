@@ -41,10 +41,10 @@ func (d byDimension) Swap(i, j int) {
 
 // Compare the midpoints along a dimension
 func (d byDimension) Less(i, j int) bool {
-	return (d.orths[i].point[d.dimension] +
-		d.orths[i].delta[d.dimension]) <
-		(d.orths[j].point[d.dimension] +
-			d.orths[j].delta[d.dimension])
+	return (d.orths[i].Point[d.dimension] +
+		d.orths[i].Delta[d.dimension]) <
+		(d.orths[j].Point[d.dimension] +
+			d.orths[j].Delta[d.dimension])
 }
 
 // Creates a balanced BVH by recursively halving, sorting and comparing vols.
