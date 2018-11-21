@@ -55,6 +55,7 @@ func TopDownBVH(orths []*Orthotope) *BVol {
 	comp1 := &Orthotope{}
 	comp2 := &Orthotope{}
 	mid := len(orths) / 2
+	//TODO remove snake case.
 	low_dim := 0
 	low_score := math.MaxInt32
 	for d := 0; d < DIMENSIONS; d++ {
