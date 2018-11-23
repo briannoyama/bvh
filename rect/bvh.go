@@ -78,6 +78,10 @@ func TopDownBVH(orths []*Orthotope) *BVol {
 	return bvol
 }
 
+func (bvol *BVol) GetDepth() int {
+	return bvol.depth
+}
+
 // Get an iterator for each volume in a Bounding Volume Hierarhcy.
 func (bvol *BVol) Iterator() *orthStack {
 	stack := &orthStack{bvh: bvol, bvStack: []*BVol{bvol}, intStack: []int{0}}

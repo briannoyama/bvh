@@ -184,6 +184,10 @@ func (s *orthStack) Contains(o *Orthotope) bool {
 func (s *orthStack) Add(orth *Orthotope) bool {
 	s.Reset()
 	bvol := s.bvh
+	if bvol.vol == nil {
+		// Add by setting the vol when there is no volumes.
+		bvol.vol = orth
+	}
 	comp := Orthotope{}
 	lowIndex := -1
 
@@ -243,8 +247,11 @@ func (s *orthStack) Remove(o *Orthotope) bool {
 				parent.desc = cousin.desc
 				parent.depth = cousin.depth
 			}
-			return true
+		} else {
+			// For depths of 0, delete by removing the volume.
+			bvol.vol = nil
 		}
+		return true
 	}
 	return false
 }

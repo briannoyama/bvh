@@ -21,10 +21,10 @@ func TestTopDownBVH(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
-	scores := [9]int{26, 57, 77, 100, 120, 135, 188, 218, 247}
+	scores := [10]int{4, 26, 57, 77, 100, 120, 135, 188, 218, 247}
 
-	tree := &BVol{vol: leaf[0]}
-	for index, orth := range leaf[1:] {
+	tree := &BVol{}
+	for index, orth := range leaf {
 		if !tree.Add(orth) {
 			t.Errorf("Unable to add: %v\n", orth.String())
 		}
@@ -73,6 +73,10 @@ func TestRemove(t *testing.T) {
 			t.Errorf("Unexpected score: %d\nExpected: %d\nTree:\n%v", tree.Score(),
 				scores[index], tree.String())
 		}
+	}
+
+	if !tree.Remove(leaf[9]) {
+		t.Errorf("Unable to remove: %v\n", leaf[9].String())
 	}
 
 	if tree.Remove(leaf[0]) {
