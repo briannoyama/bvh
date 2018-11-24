@@ -46,6 +46,13 @@ func TestAdd(t *testing.T) {
 	}
 }
 
+func TestDepth(t *testing.T) {
+	tree := getIdealTree()
+	if tree.GetDepth() != 4 {
+		t.Errorf("Unexpected depth: %d\nExpected: 4\n", tree.GetDepth())
+	}
+}
+
 func TestRemove(t *testing.T) {
 	tree := getIdealTree()
 

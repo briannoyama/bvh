@@ -81,6 +81,10 @@ func TestQuery(t *testing.T) {
 			t.Errorf("Querying %v did not return %v\n", q.String(), orth.String())
 		}
 	}
+	iter := (&BVol{}).Iterator()
+	if iter.Query(leaf[0]) != nil {
+		t.Errorf("Querying an empty hierarchy returned non nil value!\n")
+	}
 }
 
 func TestTrace(t *testing.T) {
@@ -120,6 +124,10 @@ func TestTrace(t *testing.T) {
 		for _, orth := range results[in] {
 			t.Errorf("Tracing %v did not return %v\n", q.String(), orth.String())
 		}
+	}
+	iter := (&BVol{}).Iterator()
+	if r, _ := iter.Trace(leaf[0]); r != nil {
+		t.Errorf("Tracing an empty hierarchy returned non nil value!\n")
 	}
 }
 
