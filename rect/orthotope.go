@@ -41,8 +41,8 @@ func (o *Orthotope) Contains(orth *Orthotope) bool {
  *Return t > 0 for where it intersects, or -1 if it does not intersect.
  */
 func (orth *Orthotope) Intersects(o *Orthotope) int {
-	in_t := 0
-	out_t := math.MaxInt32
+	inT := 0
+	outT := math.MaxInt32
 	for index, p0 := range o.Point {
 		p1 := o.Delta[index] + p0
 
@@ -55,16 +55,16 @@ func (orth *Orthotope) Intersects(o *Orthotope) int {
 				// Swap p0 and p1 for negative directions.
 				p0, p1 = p1, p0
 			}
-			p0_t := ((p0 - orth.Point[index]) << ACCURACY) / orth.Delta[index]
-			in_t = disc.Max(in_t, p0_t)
+			p0T := ((p0 - orth.Point[index]) << ACCURACY) / orth.Delta[index]
+			inT = disc.Max(inT, p0T)
 
-			p1_t := ((p1 - orth.Point[index]) << ACCURACY) / orth.Delta[index]
-			out_t = disc.Min(out_t, p1_t)
+			p1T := ((p1 - orth.Point[index]) << ACCURACY) / orth.Delta[index]
+			outT = disc.Min(outT, p1T)
 		}
 	}
 
-	if in_t < out_t && in_t >= 0 {
-		return in_t
+	if inT < outT && inT >= 0 {
+		return inT
 	}
 	return -1
 }

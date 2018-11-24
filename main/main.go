@@ -15,7 +15,10 @@ import (
 )
 
 func main() {
-	config := flag.String("config", "test.json", "JSON configuration for the test.")
+	config := flag.String("config", "test.json",
+		"JSON configuration for the test.")
+	compare := flag.Bool("compare", false,
+		"Compare with Top Down method? Default False.")
 	flag.Parse()
 	configFile, err := os.Open(*config)
 	if err != nil {
@@ -28,7 +31,11 @@ func main() {
 
 	test := &bvhTest{}
 	json.Unmarshal([]byte(configBytes), test)
-	test.runTest()
+	if *compare {
+		test.comparisonTest()
+	} else {
+		test.runTest()
+	}
 }
 
 type operation struct {
@@ -44,6 +51,23 @@ type bvhTest struct {
 	Removals  int
 	Queries   int
 	RandSeed  int64
+}
+
+func (b *bvhTest) comparisonTest() {
+	orths := make([]*rect.Orthotope, 0, b.Additions)
+	r := rand.New(rand.NewSource(b.RandSeed))
+	bvol := &rect.BVol{}
+	iter := bvol.Iterator()
+	for a := 0; a < b.Additions; a += 1 {
+		orth := b.makeOrth(r)
+		orths = append(orths, orth)
+
+		iter.Add(orth)
+		bvol2 := rect.TopDownBVH(orths)
+
+		fmt.Printf("%d, %d, %d, %d, %d\n", a, bvol.GetDepth(), iter.Score(),
+			bvol2.GetDepth(), bvol2.Score())
+	}
 }
 
 func (b *bvhTest) runTest() {

@@ -107,13 +107,13 @@ func TestTrace(t *testing.T) {
 	for in, q := range query {
 		iter := tree.Iterator()
 		iter.Reset()
-		prev_dist := 0
+		prevDist := 0
 		for r, dist := iter.Trace(q); r != nil; r, dist = iter.Trace(q) {
-			if dist < prev_dist {
+			if dist < prevDist {
 				t.Errorf("Tracing %v returned a distance out of order: %d < %d\n",
-					q.String(), dist, prev_dist)
+					q.String(), dist, prevDist)
 			}
-			prev_dist = dist
+			prevDist = dist
 			if len(results[in]) > 0 && results[in][0] == r {
 				results[in] = results[in][1:]
 			} else {
@@ -134,7 +134,7 @@ func TestTrace(t *testing.T) {
 func TestBVHContains(t *testing.T) {
 	tree := getIdealTree()
 
-	var to_check [4]*Orthotope = [4]*Orthotope{
+	var toCheck [4]*Orthotope = [4]*Orthotope{
 		leaf[2],
 		leaf[7],
 		&Orthotope{Point: [d]int{100, 20}, Delta: [d]int{8, 9}},
@@ -144,7 +144,7 @@ func TestBVHContains(t *testing.T) {
 	contains := [4]bool{true, true, false, false}
 
 	iter := tree.Iterator()
-	for index, orth := range to_check {
+	for index, orth := range toCheck {
 		if iter.Contains(orth) != contains[index] {
 			if contains[index] {
 				t.Errorf("Unable to find: %v\n", orth.String())

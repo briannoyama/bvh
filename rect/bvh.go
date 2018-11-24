@@ -55,21 +55,21 @@ func TopDownBVH(orths []*Orthotope) *BVol {
 	comp1 := &Orthotope{}
 	comp2 := &Orthotope{}
 	mid := len(orths) / 2
-	//TODO remove snake case.
-	low_dim := 0
-	low_score := math.MaxInt32
+
+	lowDim := 0
+	lowScore := math.MaxInt32
 	for d := 0; d < DIMENSIONS; d++ {
 		sort.Sort(byDimension{orths: orths, dimension: d})
 		comp1.MinBounds(orths[:mid]...)
 		comp2.MinBounds(orths[mid:]...)
 		score := comp1.Score() + comp2.Score()
-		if score < low_score {
-			low_score = score
-			low_dim = d
+		if score < lowScore {
+			lowScore = score
+			lowDim = d
 		}
 	}
-	if low_dim < DIMENSIONS-1 {
-		sort.Sort(byDimension{orths: orths, dimension: low_dim})
+	if lowDim < DIMENSIONS-1 {
+		sort.Sort(byDimension{orths: orths, dimension: lowDim})
 	}
 	bvol := &BVol{vol: comp1,
 		desc: [2]*BVol{TopDownBVH(orths[:mid]), TopDownBVH(orths[mid:])}}

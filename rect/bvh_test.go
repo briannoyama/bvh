@@ -57,7 +57,7 @@ func TestRemove(t *testing.T) {
 	tree := getIdealTree()
 
 	// Reordering leaves to remove to test edge cases.
-	var to_remove [9]*Orthotope = [9]*Orthotope{
+	var toRemove [9]*Orthotope = [9]*Orthotope{
 		leaf[8],
 		leaf[0],
 		leaf[2],
@@ -71,7 +71,7 @@ func TestRemove(t *testing.T) {
 
 	scores := [9]int{233, 196, 173, 152, 112, 97, 77, 50, 10}
 
-	for index, orth := range to_remove {
+	for index, orth := range toRemove {
 		if !tree.Remove(orth) {
 			t.Errorf("Unable to remove: %v\n", orth.String())
 		}
