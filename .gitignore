@@ -1,4 +1,5 @@
 #Ignore everything
 *.*
-#Except go files.
+#Except go and python files.
 !*.go
+!*.python
