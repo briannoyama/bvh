@@ -45,33 +45,24 @@ def _graph(x, p_y, ax, title, x_label, flatten):
         ax.legend()
 
 def percentile3d(data, title, x_label, max_returns = 5, flatten=0):
-    max_y = 0
-    max_x = 0
     x = []
     p_y = []
-
-    #print(len(data))
-    #exit()
     
     graphs = min(len(data), max_returns)
 
     # Get percent maps.
     for dist in data[: graphs]:
-        #print("Sorting")
-        max_y = max(max(dist[-1]), max_y)
-        max_x = max(len(dist), max_x)
         x_dist, p_y_dist = _percentiles(dist)
         x.append(x_dist)
         p_y.append(p_y_dist)
 
-    fig, ax = plt.subplots(ncols=graphs, sharey=True, squeeze=True)
+    fig, ax = plt.subplots(ncols=graphs, sharey=True, squeeze=True, figsize=(16, 4))
     
     # Graph each percentile
     for index, ax_ in enumerate(ax):
-        print("Plotting")
-        _graph(x[index], p_y[index], ax_, title, x_label, flatten)
+        _graph(x[index], p_y[index], ax_, "Query " + str(index) + " " + title, x_label, flatten)
     
-    fig.savefig("query_" + ''.join(x for x in title.title().split()) + p + ".svg")
+    fig.savefig("query_" + ''.join(x for x in title.title().split()) + ".svg")
 
 
 def comparison(data1, data2, y_label):
@@ -80,13 +71,12 @@ def comparison(data1, data2, y_label):
     y_online = np.array(data2)
     fig, ax = plt.subplots()
 
-    for p, percents in p_y.items():
-        ax.plot(x_array, y_offline, label="offline")
-        ax.plot(x_array, y_online, label="online")
-        ax.set_xlabel("size")
-        ax.set_ylabel(y_label)
-        ax.set_title(title)
-        ax.legend()
+    ax.plot(x_array, y_offline, label="offline")
+    ax.plot(x_array, y_online, label="online")
+    ax.set_xlabel("size")
+    ax.set_ylabel(y_label)
+    ax.set_title("Offline vs Online " + y_label.title())
+    ax.legend()
 
     fig.savefig(''.join(x for x in y_label.title().split()) + ".svg")
 

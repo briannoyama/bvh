@@ -39,8 +39,8 @@ def main():
     percentile2d(stats["sub_depth"], "Sub Runtime per Depth", "depth")
 
     # 3D graph of percentiles data, output, title, x_label,
-    percentile3d(stats["que_size"], "Query Runtime per Size", "size")
-    percentile3d(stats["que_depth"], "Query Runtime per Depth", "depth")
+    percentile3d(stats["que_size"], "per Size", "size", flatten=10)
+    percentile3d(stats["que_depth"], "per Depth", "depth")
 
     # Comparison graphs
     comparison(stats["offline_sa"], stats["online_sa"], "surface area")
@@ -60,18 +60,18 @@ def timePerSizeReturns(stats, line, size_index=1):
     returns = int(line[4])
     _setLength(data, returns)
     _setLength(data[returns], size)
-    data[returns][size].append(int(line[4]))
+    data[returns][size].append(int(line[3]))
 
 
 def saPerSize(stats, line, sa_index=1):
     data = stats["offline" + ("_sa" if sa_index == 2 else "_depth")]
     size = int(line[0])
     _setLength(data, size)    
-    data[size] = int(line[sa_index])
+    data[size] = int(line[sa_index+2])
 
     data = stats["online" + ("_sa" if sa_index == 2 else "_depth")]
     _setLength(data, size)
-    data[size] = int(line[sa_index+2])
+    data[size] = int(line[sa_index])
 
 
 def _setLength(list_, size):
