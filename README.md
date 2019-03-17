@@ -55,11 +55,13 @@ bvol.Remove(orth)
 
 // Use an iterator to reduce the amount of Garbage Collection
 iter := bvol.Iterator()
-
 iter.Add(orth)
+
+q := &rect.Orthotope{Point: [2]int{10, -10}, Delta: [2]int{20, 20}}
 for r := iter.Query(q); r != nil; r = iter.Query(q) {
     // Do something with each orthtope r
 }
+
 iter.Remove(orth)
 ```
 
