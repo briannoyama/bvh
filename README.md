@@ -1,8 +1,19 @@
+#Online BVH
+
+###Intro
+
 This code (hereby called onlineBVH) is a golang implementation of a binary self-balancing bounding Volume Hierarchy inspired by the tree rotations in [Fast, Effective BVH Updates for Animated Scenes](https://www.cs.utah.edu/~aek/research/tree.pdf). The hierarchies created via this algorithm have the following properties for _n_ volumes (defined by orthotopes) of any integer dimension (greater than 0):
 
 - Average _log(n)_ addition/insertion time.
 - Average _log(n)_ removal time.
 - Average _mlog(n)_ query time where m is the number of volumes found.
+
+Example Use Cases:
+
+- Collisions between objects in a game or for ray tracing.
+- Dynamically updating n-dimentional vectors (e.g. word-vectors).
+
+###How it works
 
 The algorithm uses integers (personal preference) to define the points of volumes. Queries are thread-safe; however, additions and removals are not. The animations below show the algorithm in action: 
 
@@ -20,13 +31,13 @@ The algorithm uses integers (personal preference) to define the points of volume
   </tr>
   <tr>
     <td>
-      <img alt="Animated steps of showing addition of volumes to the BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/add.gif">
+      <img style="image-rendering: pixelated;" alt="Animated steps of showing addition of volumes to the BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/add.gif">
     </td>
     <td>
-      <img alt="Animated steps of showing removal of volumes to the BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/remove0.gif">
+      <img style="image-rendering: pixelated;" alt="Animated steps of showing removal of volumes to the BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/remove0.gif">
     </td>
     <td>
-      <img alt="Animated steps of showing an alernative removal of volumes to the BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/remove1.gif">
+      <img style="image-rendering: pixelated;" alt="Animated steps of showing an alernative removal of volumes to the BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/remove1.gif">
     </td>
   </tr>
 </table>
@@ -63,13 +74,15 @@ To ensure _log(n)_ access along with close to ideal performance, the algorithm s
   </tr>
   <tr>
     <td>
-      <img alt="Output of online algorithm for generating BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/online.png">
+      <img style="image-rendering: pixelated;" alt="Output of online algorithm for generating BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/online.png">
     </td>
     <td>
-      <img alt="Output of offline algorithm for generating BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/offline.png">
+      <img style="image-rendering: pixelated;" alt="Output of offline algorithm for generating BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/offline.png">
     </td>
   </tr>
 </table>
+
+###Performance Test
 
 For those who plan to use onlineBVH for an application with strict runtime requirements, I conducted a small experiment on my Intel Core i5-7440HQ CPU @ 2.80GHz × 4. The test generated random cubes in a 3d space to add (100,000) remove (50,000) and query (100,000) such that the final BVH would contain 50,000 items. I ran this test 20 times and combined the data to get the below graphs:
 
