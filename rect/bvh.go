@@ -9,7 +9,7 @@ import (
 	disc "github.com/briannoyama/bvh/discreet"
 )
 
-// A Bounding Volume for orthotopes. Wraps the orthotope and .
+// A Bounding Volume for orthotopes. Wraps the orthotope and contains descendents.
 type BVol struct {
 	vol   *Orthotope
 	desc  [2]*BVol
@@ -39,7 +39,7 @@ func (d byDimension) Swap(i, j int) {
 	d.orths[i], d.orths[j] = d.orths[j], d.orths[i]
 }
 
-// Compare the midpoints along a dimension
+// Compare the midpoints along a dimension.
 func (d byDimension) Less(i, j int) bool {
 	return (d.orths[i].Point[d.dimension] +
 		d.orths[i].Delta[d.dimension]) <
