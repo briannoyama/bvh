@@ -40,3 +40,11 @@ func TestAbs(t *testing.T) {
 		t.Errorf("Expected %d, got %d.", expected, actual)
 	}
 }
+
+func TestPow(t *testing.T) {
+	expected := 177147
+	actual := Pow(3, 11)
+	if actual != expected {
+		t.Errorf("Expected %d, got %d.", expected, actual)
+	}
+}

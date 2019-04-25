@@ -3,6 +3,18 @@ package rect
 
 import "math"
 
+// OrthStack gives methods for working with Orthotope BVol.
+type OrthStack interface {
+	Reset()
+	HasNext() bool
+	Next() *BVol
+	Trace(o *Orthotope) (*Orthotope, int)
+	Query(o *Orthotope) *Orthotope
+	Add(orth *Orthotope) bool
+	Contains(orth *Orthotope) bool
+	Remove(o *Orthotope) bool
+}
+
 type orthStack struct {
 	bvh      *BVol
 	bvStack  []*BVol
