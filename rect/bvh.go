@@ -13,7 +13,7 @@ import (
 type BVol struct {
 	vol   *Orthotope
 	desc  [2]*BVol
-	depth int
+	depth int32
 }
 
 func (bvol *BVol) minBound() {
@@ -57,7 +57,7 @@ func TopDownBVH(orths []*Orthotope) *BVol {
 	mid := len(orths) / 2
 
 	lowDim := 0
-	lowScore := math.MaxInt32
+	lowScore := int32(math.MaxInt32)
 	for d := 0; d < DIMENSIONS; d++ {
 		sort.Sort(byDimension{orths: orths, dimension: d})
 		comp1.MinBounds(orths[:mid]...)
@@ -78,13 +78,13 @@ func TopDownBVH(orths []*Orthotope) *BVol {
 	return bvol
 }
 
-func (bvol *BVol) GetDepth() int {
+func (bvol *BVol) GetDepth() int32 {
 	return bvol.depth
 }
 
 // Get an iterator for each volume in a Bounding Volume Hierarhcy.
 func (bvol *BVol) Iterator() *orthStack {
-	stack := &orthStack{bvh: bvol, bvStack: []*BVol{bvol}, intStack: []int{0}}
+	stack := &orthStack{bvh: bvol, bvStack: []*BVol{bvol}, intStack: []int32{0}}
 	return stack
 }
 
@@ -99,7 +99,7 @@ func (bvol *BVol) Remove(orth *Orthotope) bool {
 	return s.Remove(orth)
 }
 
-func (bvol *BVol) Score() int {
+func (bvol *BVol) Score() int32 {
 	s := bvol.Iterator()
 	return s.Score()
 }

@@ -7,22 +7,22 @@ import (
 
 func TestNext(t *testing.T) {
 	bvs := []*BVol{
-		&BVol{
+		{
 			vol: &Orthotope{
-				Point: [DIMENSIONS]int{2, 2},
-				Delta: [DIMENSIONS]int{8, 8},
+				Point: [DIMENSIONS]int32{2, 2},
+				Delta: [DIMENSIONS]int32{8, 8},
 			},
 		},
-		&BVol{
+		{
 			vol: &Orthotope{
-				Point: [DIMENSIONS]int{2, 2},
-				Delta: [DIMENSIONS]int{2, 2},
+				Point: [DIMENSIONS]int32{2, 2},
+				Delta: [DIMENSIONS]int32{2, 2},
 			},
 		},
-		&BVol{
+		{
 			vol: &Orthotope{
-				Point: [DIMENSIONS]int{7, 7},
-				Delta: [DIMENSIONS]int{3, 3},
+				Point: [DIMENSIONS]int32{7, 7},
+				Delta: [DIMENSIONS]int32{3, 3},
 			},
 		},
 	}
@@ -43,11 +43,11 @@ func TestNext(t *testing.T) {
 func TestQuery(t *testing.T) {
 	tree := getIdealTree()
 	query := [5]*Orthotope{
-		&Orthotope{Point: [d]int{11, 12}, Delta: [d]int{0, 0}},
-		&Orthotope{Point: [d]int{14, 15}, Delta: [d]int{0, 0}},
-		&Orthotope{Point: [d]int{-2, -2}, Delta: [d]int{30, 30}},
-		&Orthotope{Point: [d]int{30, 30}, Delta: [d]int{30, 30}},
-		&Orthotope{Point: [d]int{17, 9}, Delta: [d]int{5, 5}},
+		{Point: [d]int32{11, 12}, Delta: [d]int32{0, 0}},
+		{Point: [d]int32{14, 15}, Delta: [d]int32{0, 0}},
+		{Point: [d]int32{-2, -2}, Delta: [d]int32{30, 30}},
+		{Point: [d]int32{30, 30}, Delta: [d]int32{30, 30}},
+		{Point: [d]int32{17, 9}, Delta: [d]int32{5, 5}},
 	}
 	results := [5][]*Orthotope{
 		{leaf[4]},
@@ -90,11 +90,11 @@ func TestQuery(t *testing.T) {
 func TestTrace(t *testing.T) {
 	tree := getIdealTree()
 	query := [5]*Orthotope{
-		&Orthotope{Point: [d]int{-2, 0}, Delta: [d]int{4, 2}},
-		&Orthotope{Point: [d]int{14, 11}, Delta: [d]int{-1, 0}},
-		&Orthotope{Point: [d]int{7, 20}, Delta: [d]int{4, -5}},
-		&Orthotope{Point: [d]int{30, 30}, Delta: [d]int{-1, -1}},
-		&Orthotope{Point: [d]int{0, 40}, Delta: [d]int{5, -1}},
+		{Point: [d]int32{-2, 0}, Delta: [d]int32{4, 2}},
+		{Point: [d]int32{14, 11}, Delta: [d]int32{-1, 0}},
+		{Point: [d]int32{7, 20}, Delta: [d]int32{4, -5}},
+		{Point: [d]int32{30, 30}, Delta: [d]int32{-1, -1}},
+		{Point: [d]int32{0, 40}, Delta: [d]int32{5, -1}},
 	}
 	results := [5][]*Orthotope{
 		{leaf[0], leaf[3]},
@@ -107,7 +107,7 @@ func TestTrace(t *testing.T) {
 	for in, q := range query {
 		iter := tree.Iterator()
 		iter.Reset()
-		prevDist := 0
+		prevDist := int32(0)
 		for r, dist := iter.Trace(q); r != nil; r, dist = iter.Trace(q) {
 			if dist < prevDist {
 				t.Errorf("Tracing %v returned a distance out of order: %d < %d\n",
@@ -134,11 +134,11 @@ func TestTrace(t *testing.T) {
 func TestBVHContains(t *testing.T) {
 	tree := getIdealTree()
 
-	var toCheck [4]*Orthotope = [4]*Orthotope{
+	toCheck := [4]*Orthotope{
 		leaf[2],
 		leaf[7],
-		&Orthotope{Point: [d]int{100, 20}, Delta: [d]int{8, 9}},
-		&Orthotope{Point: [d]int{19, 2}, Delta: [d]int{2, 2}}, // Similar to leaf[2]
+		{Point: [d]int32{100, 20}, Delta: [d]int32{8, 9}},
+		{Point: [d]int32{19, 2}, Delta: [d]int32{2, 2}}, // Similar to leaf[2]
 	}
 
 	contains := [4]bool{true, true, false, false}

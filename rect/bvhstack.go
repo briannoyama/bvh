@@ -18,7 +18,7 @@ type OrthStack interface {
 type orthStack struct {
 	bvh      *BVol
 	bvStack  []*BVol
-	intStack []int
+	intStack []int32
 }
 
 // Resets the stack.
@@ -33,16 +33,16 @@ func (s *orthStack) HasNext() bool {
 	return len(s.bvStack) > 0
 }
 
-func (s *orthStack) append(bvol *BVol, index int) {
+func (s *orthStack) append(bvol *BVol, index int32) {
 	s.bvStack = append(s.bvStack, bvol)
 	s.intStack = append(s.intStack, index)
 }
 
-func (s *orthStack) peek() (*BVol, int) {
+func (s *orthStack) peek() (*BVol, int32) {
 	return s.bvStack[len(s.bvStack)-1], s.intStack[len(s.intStack)-1]
 }
 
-func (s *orthStack) pop() (*BVol, int) {
+func (s *orthStack) pop() (*BVol, int32) {
 	bvol, index := s.peek()
 	s.bvStack = s.bvStack[:len(s.bvStack)-1]
 	s.intStack = s.intStack[:len(s.intStack)-1]
@@ -71,7 +71,7 @@ func (s *orthStack) Next() *BVol {
  * Its depth in the tree, and the distance from the beginning of the vector, o,
  * passed in.
  */
-func (s *orthStack) Trace(o *Orthotope) (*Orthotope, int) {
+func (s *orthStack) Trace(o *Orthotope) (*Orthotope, int32) {
 	if !s.HasNext() {
 		return nil, -1
 	}
@@ -201,7 +201,7 @@ func (s *orthStack) Add(orth *Orthotope) bool {
 		bvol.vol = orth
 	}
 	comp := Orthotope{}
-	lowIndex := -1
+	lowIndex := int32(-1)
 
 	for next := bvol; next.vol != orth; next = next.desc[lowIndex] {
 		if next.depth == 0 {
@@ -211,10 +211,10 @@ func (s *orthStack) Add(orth *Orthotope) bool {
 			next.depth = 1
 			comp = *next.vol
 			next.vol = &comp
-			lowIndex = 0
+			lowIndex = int32(0)
 		} else {
 			// We cannot add the orthotope here. Descend.
-			smallestScore := math.MaxInt32
+			smallestScore := int32(math.MaxInt32)
 
 			for index, vol := range next.desc {
 				comp.MinBounds(orth, vol.vol)
@@ -226,7 +226,7 @@ func (s *orthStack) Add(orth *Orthotope) bool {
 
 				score := comp.Score()
 				if score < smallestScore {
-					lowIndex = index
+					lowIndex = int32(index)
 					smallestScore = score
 				}
 			}
@@ -269,9 +269,9 @@ func (s *orthStack) Remove(o *Orthotope) bool {
 }
 
 // Returns the total score by using the volumes Score method for each volume.
-func (s *orthStack) Score() int {
+func (s *orthStack) Score() int32 {
 	s.Reset()
-	score := 0
+	score := int32(0)
 
 	for s.HasNext() {
 		score += s.Next().vol.Score()
@@ -328,7 +328,6 @@ func (s *orthStack) rebalanceRemove() {
 			cousin.redepth()
 			cousin.minBound()
 		}
-		//parent.redepth()
 		parent.minBound()
 		parent.redistribute()
 	}

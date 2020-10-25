@@ -11,8 +11,8 @@ import (
 const DIMENSIONS int = 3
 
 type Orthotope struct {
-	Point [DIMENSIONS]int
-	Delta [DIMENSIONS]int
+	Point [DIMENSIONS]int32
+	Delta [DIMENSIONS]int32
 }
 
 var ACCURACY uint = 13
@@ -40,9 +40,9 @@ func (o *Orthotope) Contains(orth *Orthotope) bool {
 /*Let orth represent a direction (a vector where delta defines direction).
  *Return t > 0 for where it intersects, or -1 if it does not intersect.
  */
-func (orth *Orthotope) Intersects(o *Orthotope) int {
-	inT := 0
-	outT := math.MaxInt32
+func (orth *Orthotope) Intersects(o *Orthotope) int32 {
+	inT := int32(0)
+	outT := int32(math.MaxInt32)
 	for index, p0 := range o.Point {
 		p1 := o.Delta[index] + p0
 
@@ -84,8 +84,8 @@ func (o *Orthotope) MinBounds(others ...*Orthotope) {
 	}
 }
 
-func (o *Orthotope) Score() int {
-	score := 0
+func (o *Orthotope) Score() int32 {
+	score := int32(0)
 	for _, d := range o.Delta {
 		score += d
 	}
