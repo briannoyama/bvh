@@ -8,7 +8,7 @@ type OrthStack interface {
 	Reset()
 	HasNext() bool
 	Next() *BVol
-	Trace(o *Orthotope) (*Orthotope, int)
+	Trace(o *Orthotope) (*Orthotope, int32)
 	Query(o *Orthotope) *Orthotope
 	Add(orth *Orthotope) bool
 	Contains(orth *Orthotope) bool
