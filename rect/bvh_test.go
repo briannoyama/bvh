@@ -15,7 +15,7 @@ func TestTopDownBVH(t *testing.T) {
 	copy(orths, leaf[:])
 	tree := TopDownBVH(orths)
 	if tree.Score() > 262 {
-		t.Errorf("Ineeficient BVH created via TopDown:\n%v", tree.String())
+		t.Errorf("Inefficient BVH created via TopDown:\n%v", tree.String())
 		drawBVH(tree, "error_ideal_tree.png")
 	}
 }
@@ -118,6 +118,17 @@ func TestString(t *testing.T) {
 	if strings.Replace(actual, " 0", "", -1) != expectedString {
 		t.Errorf("Actual string:\n%v\n...doesn't match expected:\n%v\n",
 			actual, expectedString)
+	}
+}
+
+func TestDuplicateVol(t *testing.T) {
+	tree := getIdealTree()
+	leaf_copy := *leaf[4]
+	if !tree.Add(&leaf_copy) {
+		t.Errorf("Unable to add duplicate volume.")
+	}
+	if !tree.Remove(&leaf_copy) {
+		t.Errorf("Unable to remove duplicate volume.")
 	}
 }
 

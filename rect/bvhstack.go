@@ -167,19 +167,27 @@ func (s *orthStack) Query(o *Orthotope) *Orthotope {
 
 func (s *orthStack) path(o *Orthotope) *BVol {
 	bvol, index := s.peek()
-	for bvol.depth > 0 {
-		if index >= 2 {
+	for bvol.vol != o {
+		if bvol.depth == 0 {
 			if !s.traceUp() {
 				break
 			}
-		} else {
-			if bvol.desc[index].vol.Contains(o) {
-				s.append(bvol.desc[index], 0)
-			} else {
-				s.intStack[len(s.intStack)-1]++
-			}
+			bvol, index = s.peek()
 		}
-		bvol, index = s.peek()
+		for bvol.depth > 0 {
+			if index >= 2 {
+				if !s.traceUp() {
+					break
+				}
+			} else {
+				if bvol.desc[index].vol.Contains(o) {
+					s.append(bvol.desc[index], 0)
+				} else {
+					s.intStack[len(s.intStack)-1]++
+				}
+			}
+			bvol, index = s.peek()
+		}
 	}
 	return bvol
 }
