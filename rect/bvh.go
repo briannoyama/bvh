@@ -126,7 +126,7 @@ func swapCheck(first *BVol, second *BVol, secIndex int) {
 		first.desc[index], second.desc[secIndex] =
 			second.desc[secIndex], first.desc[index]
 
-			// Ensure that swap did not unbalance second.
+		// Ensure that swap did not unbalance second.
 		if disc.Abs(second.desc[0].depth-second.desc[1].depth) < 2 {
 			// Score first then second, since first may be a child of second.
 			first.minBound()

@@ -97,6 +97,8 @@ func (s *orthStack) Trace(o *Orthotope) (*Orthotope, int32) {
 			}
 		} else if distance1 >= 0 {
 			bvol, distance = bvol.desc[1], distance1
+		} else if s.HasNext() {
+			bvol, distance = s.pop()
 		} else {
 			return nil, -1
 		}
@@ -157,17 +159,17 @@ func (s *orthStack) Query(o *Orthotope) *Orthotope {
 	if !s.HasNext() {
 		return nil
 	}
-	// Use trace up to get the next possible branch.
 
+	// Use trace up to get the next possible branch.
 	if s.traceUp() {
-		s.queryNext(o)
+		//s.queryNext(o)
 	}
 	return bvol.vol
 }
 
 func (s *orthStack) path(o *Orthotope) *BVol {
 	bvol, index := s.peek()
-	for bvol.vol != o {
+	for bvol.vol != o && s.HasNext() {
 		if bvol.depth == 0 {
 			if !s.traceUp() {
 				break
@@ -303,6 +305,8 @@ func (s *orthStack) rebalanceAdd() {
 			parent.redepth()
 		}
 		gParent.redistribute()
+		// Found that gParent was not consistently getting minBound after redistribute.
+		gParent.minBound()
 	}
 	gParent.minBound()
 }
