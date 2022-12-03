@@ -1,4 +1,4 @@
-//Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
+// Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
 package discreet
 
 import (
@@ -6,7 +6,7 @@ import (
 )
 
 func TestMin(t *testing.T) {
-	expected := -5
+	expected := int32(-5)
 	actual := Min(expected, 10)
 	if actual != expected {
 		t.Errorf("Expected %d, got %d.", expected, actual)
@@ -20,7 +20,7 @@ func TestMin(t *testing.T) {
 }
 
 func TestMax(t *testing.T) {
-	expected := -5
+	expected := int32(-5)
 	actual := Max(expected, -7)
 	if actual != expected {
 		t.Errorf("Expected %d, got %d.", expected, actual)
@@ -34,7 +34,7 @@ func TestMax(t *testing.T) {
 }
 
 func TestAbs(t *testing.T) {
-	expected := 20
+	expected := int32(20)
 	actual := Abs(-20)
 	if actual != expected {
 		t.Errorf("Expected %d, got %d.", expected, actual)
@@ -42,7 +42,7 @@ func TestAbs(t *testing.T) {
 }
 
 func TestPow(t *testing.T) {
-	expected := 177147
+	expected := int32(177147)
 	actual := Pow(3, 11)
 	if actual != expected {
 		t.Errorf("Expected %d, got %d.", expected, actual)
