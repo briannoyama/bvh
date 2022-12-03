@@ -143,8 +143,8 @@ func distribute(r *rand.Rand, totalEvents int, steps int) *[]int {
 func (b *bvhTest) makeOrth(r *rand.Rand) *rect.Orthotope {
 	orth := &rect.Orthotope{}
 	for d := 0; d < rect.DIMENSIONS; d += 1 {
-		orth.Delta[d] = b.MinVol[d] + r.Intn(b.MaxVol[d]-b.MinVol[d])
-		orth.Point[d] = b.MaxBounds.Point[d] + r.Intn(b.MaxBounds.Delta[d]-
+		orth.Delta[d] = int32(b.MinVol[d] + r.Intn(b.MaxVol[d]-b.MinVol[d]))
+		orth.Point[d] = b.MaxBounds.Point[d] + r.Int31n(b.MaxBounds.Delta[d]-
 			orth.Delta[d])
 	}
 	return orth

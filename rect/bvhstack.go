@@ -234,7 +234,7 @@ func (s *orthStack) Add(orth *Orthotope) bool {
 					return false
 				}
 
-				score := comp.Score()
+				score := comp.Score() - vol.vol.Score()
 				if score < smallestScore {
 					lowIndex = int32(index)
 					smallestScore = score
@@ -326,9 +326,9 @@ func (s *orthStack) rebalanceRemove() {
 			if cousin.desc[1].depth == depth+1 {
 				if cousin.desc[0].depth == depth+1 {
 					cousin.vol.MinBounds(cousin.desc[1].vol, parent.desc[pIndex].vol)
-					score := cousin.vol.Score()
+					score := cousin.vol.Score() - cousin.desc[1].vol.Score()
 					cousin.vol.MinBounds(cousin.desc[0].vol, parent.desc[pIndex].vol)
-					if score < cousin.vol.Score() {
+					if score < cousin.vol.Score()-cousin.desc[0].vol.Score() {
 						swap = 1
 					}
 				} else {
