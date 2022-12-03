@@ -32,7 +32,7 @@ func TestSAH(t *testing.T) {
 			t: &BVol{
 				vol: &Orthotope{Point: [d]int32{0, 0, 0}, Delta: [d]int32{10, 12, 1}},
 			},
-			want: 1.2 * 2 * (10 + 120 + 12),
+			want: 1.2,
 		},
 		{
 			name: "Recursive",
@@ -48,7 +48,7 @@ func TestSAH(t *testing.T) {
 					},
 				},
 			},
-			want:/* internal */ 1*284 + /* leaf */ 1.2*(22+30),
+			want: ( /* internal */ 1*284 + /* leaf */ 1.2*(22+30)) / /* root */ 284,
 		},
 	}
 
