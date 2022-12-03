@@ -1,4 +1,4 @@
-//Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
+// Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
 package rect
 
 import (
@@ -82,6 +82,27 @@ func (o *Orthotope) MinBounds(others ...*Orthotope) {
 		}
 		o.Delta[index] = p1 - o.Point[index]
 	}
+}
+
+func (o *Orthotope) Volume() int32 {
+	v := int32(1)
+	for _, d := range o.Delta {
+		v *= d
+	}
+	return v
+}
+
+func (o *Orthotope) SurfaceArea() int32 {
+	if DIMENSIONS == 1 {
+		return 0
+	}
+
+	v := o.Volume()
+	sa := int32(0)
+	for i := 0; i < DIMENSIONS; i++ {
+		sa += v / o.Delta[i]
+	}
+	return 2 * sa
 }
 
 func (o *Orthotope) Score() int32 {
