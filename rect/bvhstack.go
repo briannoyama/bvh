@@ -307,7 +307,7 @@ func (s *orthStack) SAH(cInternal, cLeaves, cOverlap float64) float64 {
 			ci += float64(n.vol.SurfaceArea())
 		}
 	}
-	return cInternal*ci + cLeaves*cl + cOverlap*co
+	return (cInternal*ci + cLeaves*cl + cOverlap*co) / float64(s.bvh.vol.SurfaceArea())
 }
 
 // Attempt rebalancing when the depth of the tree has potentially increased.
