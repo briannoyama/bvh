@@ -1,7 +1,9 @@
 // Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
 package rect
 
-import "math"
+import (
+	"math"
+)
 
 // OrthStack gives methods for working with Orthotope BVol.
 type OrthStack interface {
@@ -293,6 +295,7 @@ func (s *orthStack) SAH(cInternal, cLeaves, cOverlap float64) float64 {
 	s.Reset()
 
 	var ci, cl, co float64
+
 	for s.HasNext() {
 		n := s.Next()
 		if n.depth == 0 {
