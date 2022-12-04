@@ -1,10 +1,11 @@
-//Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
+// Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
 package rect
 
 import (
 	"image"
 	"image/color"
 	"image/png"
+	"math"
 	"os"
 	"strings"
 	"testing"
@@ -17,6 +18,46 @@ func TestTopDownBVH(t *testing.T) {
 	if tree.Score() > 262 {
 		t.Errorf("Inefficient BVH created via TopDown:\n%v", tree.String())
 		drawBVH(tree, "error_ideal_tree.png")
+	}
+}
+
+func TestSAH(t *testing.T) {
+	configs := []struct {
+		name string
+		t    *BVol
+		want float64
+	}{
+		{
+			name: "Root",
+			t: &BVol{
+				vol: &Orthotope{Point: [d]int32{0, 0, 0}, Delta: [d]int32{10, 12, 1}},
+			},
+			want: 1.2,
+		},
+		{
+			name: "Recursive",
+			t: &BVol{
+				vol:   &Orthotope{Point: [d]int32{0, 0, 0}, Delta: [d]int32{10, 12, 1}}, // surface area = 284
+				depth: 1,
+				desc: [2]*BVol{
+					&BVol{
+						vol: &Orthotope{Point: [d]int32{0, 0, 0}, Delta: [d]int32{3, 2, 1}}, // surface area = 22
+					},
+					&BVol{
+						vol: &Orthotope{Point: [d]int32{7, 9, 0}, Delta: [d]int32{3, 3, 1}}, // surface area = 30
+					},
+				},
+			},
+			want: ( /* internal */ 1*284 + /* leaf */ 1.2*(22+30)) / /* root */ 284,
+		},
+	}
+
+	for _, c := range configs {
+		t.Run(c.name, func(t *testing.T) {
+			if got := c.t.SAH(); math.Abs(got-c.want) > 1e-5 {
+				t.Errorf("Expected %v, got %v", c.want, got)
+			}
+		})
 	}
 }
 

@@ -1,4 +1,4 @@
-//Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
+// Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
 package rect
 
 import (
@@ -104,6 +104,13 @@ func (bvol *BVol) Score() int32 {
 	return s.Score()
 }
 
+// SAH is a surface area heuristic as defined by MacDonald and Booth, 1990
+// (https://doi.org/10.1007/BF01911006). This is an estimate of the overall tree
+// quality.
+func (bvol *BVol) SAH() float64 {
+	return bvol.Iterator().SAH(1.0, 1.2, 0)
+}
+
 // Rebalances the children of a given volume.
 func (bvol *BVol) redistribute() {
 	if bvol.desc[1].depth > bvol.desc[0].depth {
@@ -154,7 +161,7 @@ func swapCheck(first *BVol, second *BVol, secIndex int) {
 	second.redepth()
 }
 
-//Recursive algorithm for comparing BVHs
+// Recursive algorithm for comparing BVHs
 func (bvh *BVol) Equals(other *BVol) bool {
 	return (bvh.depth == 0 && other.depth == 0 && bvh.vol == other.vol) ||
 		(bvh.depth > 0 && other.depth > 0 && bvh.vol.Equals(other.vol) &&

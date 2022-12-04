@@ -1,4 +1,4 @@
-//Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
+// Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
 package rect
 
 import (

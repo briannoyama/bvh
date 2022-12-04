@@ -1,7 +1,9 @@
-//Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
+// Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
 package rect
 
-import "math"
+import (
+	"math"
+)
 
 // OrthStack gives methods for working with Orthotope BVol.
 type OrthStack interface {
@@ -249,7 +251,7 @@ func (s *orthStack) Add(orth *Orthotope) bool {
 	return true
 }
 
-//Remove an orthotope from the BVH associated with this stack.
+// Remove an orthotope from the BVH associated with this stack.
 func (s *orthStack) Remove(o *Orthotope) bool {
 	s.Reset()
 	bvol := s.path(o)
@@ -287,6 +289,25 @@ func (s *orthStack) Score() int32 {
 		score += s.Next().vol.Score()
 	}
 	return score
+}
+
+func (s *orthStack) SAH(cInternal, cLeaves, cOverlap float64) float64 {
+	s.Reset()
+
+	var ci, cl, co float64
+
+	for s.HasNext() {
+		n := s.Next()
+		if n.depth == 0 {
+			cl += float64(n.vol.SurfaceArea())
+			// This BVH implementatino only has a single AABB in its
+			// leaf node.
+			co += float64(n.vol.SurfaceArea())
+		} else {
+			ci += float64(n.vol.SurfaceArea())
+		}
+	}
+	return (cInternal*ci + cLeaves*cl + cOverlap*co) / float64(s.bvh.vol.SurfaceArea())
 }
 
 // Attempt rebalancing when the depth of the tree has potentially increased.

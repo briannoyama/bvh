@@ -1,4 +1,4 @@
-//Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
+// Copyright 2018 Brian Noyama. Subject to the the Apache License, Version 2.0.
 package rect
 
 import (
@@ -53,6 +53,25 @@ func TestScore(t *testing.T) {
 	expected := int32(45)
 	if score != expected {
 		t.Errorf("Expected %v, got %v.", expected, score)
+	}
+}
+
+func TestSurfaceArea(t *testing.T) {
+	o := &Orthotope{Point: [d]int32{0, 0, 0}, Delta: [d]int32{30, 15, 2}}
+	want := int32(2) * (30*15 + 15*2 + 30*2)
+
+	if got := o.SurfaceArea(); got != want {
+		t.Errorf("Expected %v, got %v.", want, got)
+	}
+
+}
+
+func TestVolume(t *testing.T) {
+	o := &Orthotope{Point: [d]int32{10, -20, -10}, Delta: [d]int32{30, 15, 1}}
+
+	want := int32(450)
+	if got := o.Volume(); got != want {
+		t.Errorf("Expected %v, got %v.", want, got)
 	}
 }
 
