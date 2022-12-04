@@ -40,7 +40,7 @@ def _graph(x, p_y, ax, title, x_label, flatten):
         ax.semilogy(x_array, np.array([mean(percents[max(0, p-flatten):min(len(percents), p+1)]) 
             for p in range(len(percents))]), label=p)
         ax.set_xlabel(x_label)
-        ax.set_ylabel("speed (ns)")
+        ax.set_ylabel("latency (ns)")
         ax.set_title(title)
         ax.legend()
 

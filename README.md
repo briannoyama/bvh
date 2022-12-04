@@ -47,22 +47,23 @@ Here's an example of how to use the code:
 ```golang
 import "github.com/briannoyama/bvh/rect"
 
-// Change the DIMENSIONS constant in orthotope.go for your use case.
-orth := &rect.Orthotope{Point: [3]int32{10, -20, 10}, Delta: [3]int32{30, 30, 30}}
-bvol := &rect.BVol{}
-bvol.Add(orth)
-bvol.Remove(orth)
+...
 
-// Use an iterator to reduce the amount of Garbage Collection
-iter := bvol.Iterator()
-iter.Add(orth)
+    // Change the DIMENSIONS constant in orthotope.go for your use case.
+    orth := &rect.Orthotope{Point: [3]int32{10, -20, 10}, Delta: [3]int32{30, 30, 30}}
+    bvol := &rect.BVol{}
+    
+    iter := bvol.Iterator()
+    iter.Add(orth)
+    iter.Reset()
 
-q := &rect.Orthotope{Point: [3]int{10, -10, 10}, Delta: [3]int{20, 20, 20}}
-for r := iter.Query(q); r != nil; r = iter.Query(q) {
-    // Do something with each orthotope r
-}
+	q := &rect.Orthotope{Point: [3]int32{0, -10, 10}, Delta: [3]int32{20, 20, 20}}
+    for r := iter.Query(q); r != nil; r = iter.Query(q) {
+        fmt.Printf("Orthtope: %d @%p", r, r)
+    }
 
-iter.Remove(orth)
+    iter.Remove(orth)
+    // See main/example_test.go for more complete example.
 ```
 
 To ensure _log(n)_ access along with close to ideal performance, the algorithm swaps child nodes within the BVH tree both to balance the tree and to reduce the Surface Area of the generated bounding volumes. Below, one can see the output of onlineBVH vs an offline algorithm (hereby offlineBVH) that attempts to create "ideal" binary BVHs. The offline algorithm tries to create an ideal tree by sorting all of the volumes in each of their dimensions and comparing the surface areas of half the volumes at a time. Rinse and repeat recursively. This takes _O(dnlog<sup>2</sup>(n))_ for the offline method compared to the _O(nlog(n))_ time for the online method. (I'm not presenting a formal proof of big O. There may be a tighter big O bound, but that should be close enough.) In short, the offline method takes way more time to construct.
