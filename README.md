@@ -111,7 +111,7 @@ As mentioned, there are two things that should (in theory) determine the perform
 ![Depth of the online vs offline algorithms](http://briannoyama.github.io/assets/images/bvh-steps/Depth.svg)
 ![Surface area of the online vs offline algorithms](http://briannoyama.github.io/assets/images/bvh-steps/SurfaceArea.svg)
 
-Surprisingly, the online tree does creates a better tree than the offline algorithm, both of which grow linearly. For this study we ended at around 14000 added volumes due to the time it took to create an offline tree.
+Surprisingly, the online tree creates a tree almost as well as the offline algorithm, both of which grow linearly. For this study we ended at around 14000 added volumes due to the time it took to create an offline tree.
 
 A few thoughts about the performance: There are a large number of relatively small method calls that are not likely inlined (which ones? I leave this as an activity for the reader). Currently for moving an existing volume, one needs to do a removal followed by an addition. The results from the query study suggests that for volumes that only need to be moved a small amount, it may be possible to make a better movement method that would take approximately half the time.
 
