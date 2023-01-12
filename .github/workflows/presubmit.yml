@@ -20,4 +20,4 @@ jobs:
         go-version: 1.19
 
     - name: Test github.com/briannoyama/bvh
-      run: go test github.com/briannoyama/bvh/... -run ^$ -bench . -benchmem
+      run: go test github.com/briannoyama/bvh/... -bench .
