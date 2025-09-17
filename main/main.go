@@ -29,7 +29,7 @@ func main() {
 
 	configBytes, _ := ioutil.ReadAll(configFile)
 
-	test := &bvhTest{}
+	test := &bvhTest[int32]{}
 	json.Unmarshal([]byte(configBytes), test)
 	if *compare {
 		test.comparisonTest()
@@ -38,13 +38,13 @@ func main() {
 	}
 }
 
-type operation struct {
-	orth   *rect.Orthotope
+type operation[T rect.Num] struct {
+	orth   *rect.Orthotope[T]
 	opcode int
 }
 
-type bvhTest struct {
-	MaxBounds *rect.Orthotope
+type bvhTest[T rect.Num] struct {
+	MaxBounds *rect.Orthotope[T]
 	MinVol    *[rect.DIMENSIONS]int
 	MaxVol    *[rect.DIMENSIONS]int
 	Additions int
@@ -53,10 +53,10 @@ type bvhTest struct {
 	RandSeed  int64
 }
 
-func (b *bvhTest) comparisonTest() {
-	orths := make([]*rect.Orthotope, 0, b.Additions)
+func (b *bvhTest[T]) comparisonTest() {
+	orths := make([]*rect.Orthotope[T], 0, b.Additions)
 	r := rand.New(rand.NewSource(b.RandSeed))
-	bvol := &rect.BVol{}
+	bvol := &rect.BVol[T]{}
 	iter := bvol.Iterator()
 	for a := 0; a < b.Additions; a += 1 {
 		orth := b.makeOrth(r)
@@ -65,15 +65,15 @@ func (b *bvhTest) comparisonTest() {
 		iter.Add(orth)
 		bvol2 := rect.TopDownBVH(orths)
 
-		fmt.Printf("%d, %d, %d, %d, %d\n", a, bvol.GetDepth(), iter.Score(),
+		fmt.Printf("%d, %v, %v, %v, %v\n", a, bvol.GetDepth(), iter.Score(),
 			bvol2.GetDepth(), bvol2.Score())
 	}
 }
 
-func (b *bvhTest) runTest() {
-	orths := make([]*rect.Orthotope, 0, b.Additions)
+func (b *bvhTest[T]) runTest() {
+	orths := make([]*rect.Orthotope[T], 0, b.Additions)
 	removed := make(map[int]bool, b.Additions)
-	bvol := &rect.BVol{}
+	bvol := &rect.BVol[T]{}
 	iter := bvol.Iterator()
 	r := rand.New(rand.NewSource(b.RandSeed))
 
@@ -95,7 +95,7 @@ func (b *bvhTest) runTest() {
 		iter.Add(orth)
 		duration := time.Now().Sub(t).Nanoseconds()
 		total += 1
-		fmt.Printf("add, %d, %d, %d\n", total, bvol.GetDepth(), duration)
+		fmt.Printf("add, %d, %v, %d\n", total, bvol.GetDepth(), duration)
 
 		for removal := 0; removal < removals[a]; removal += 1 {
 			toRemove := r.Intn(a + 1)
@@ -109,7 +109,7 @@ func (b *bvhTest) runTest() {
 				iter.Remove(orths[toRemove])
 				duration := time.Now().Sub(t).Nanoseconds()
 				total -= 1
-				fmt.Printf("sub, %d, %d, %d\n", total, bvol.GetDepth(), duration)
+				fmt.Printf("sub, %d, %v, %d\n", total, bvol.GetDepth(), duration)
 			} else if a+1 < len(removals) {
 				removals[a+1] += 1
 			}
@@ -125,7 +125,7 @@ func (b *bvhTest) runTest() {
 				count += 1
 			}
 			duration := time.Now().Sub(t).Nanoseconds()
-			fmt.Printf("que, %d, %d, %d, %d\n", total, bvol.GetDepth(),
+			fmt.Printf("que, %d, %v, %d, %d\n", total, bvol.GetDepth(),
 				duration, count)
 		}
 	}
@@ -140,11 +140,11 @@ func distribute(r *rand.Rand, totalEvents int, steps int) *[]int {
 	return &events
 }
 
-func (b *bvhTest) makeOrth(r *rand.Rand) *rect.Orthotope {
-	orth := &rect.Orthotope{}
+func (b *bvhTest[T]) makeOrth(r *rand.Rand) *rect.Orthotope[T] {
+	orth := &rect.Orthotope[T]{}
 	for d := 0; d < rect.DIMENSIONS; d += 1 {
-		orth.Delta[d] = int32(b.MinVol[d] + r.Intn(b.MaxVol[d]-b.MinVol[d]))
-		orth.Point[d] = b.MaxBounds.Point[d] + r.Int31n(b.MaxBounds.Delta[d]-
+		orth.Delta[d] = T(b.MinVol[d] + r.Intn(b.MaxVol[d]-b.MinVol[d]))
+		orth.Point[d] = b.MaxBounds.Point[d] + T(b.MaxBounds.Delta[d]-
 			orth.Delta[d])
 	}
 	return orth

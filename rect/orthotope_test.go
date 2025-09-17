@@ -10,9 +10,9 @@ import (
 const d = DIMENSIONS
 
 func TestOverlaps(t *testing.T) {
-	o1 := &Orthotope{Point: [d]int32{10, -20}, Delta: [d]int32{30, 30}}
-	o2 := &Orthotope{Point: [d]int32{-10, 5}, Delta: [d]int32{30, 30}}
-	o3 := &Orthotope{Point: [d]int32{-10, 25}, Delta: [d]int32{30, 30}}
+	o1 := &Orthotope[int32]{Point: [d]int32{10, -20}, Delta: [d]int32{30, 30}}
+	o2 := &Orthotope[int32]{Point: [d]int32{-10, 5}, Delta: [d]int32{30, 30}}
+	o3 := &Orthotope[int32]{Point: [d]int32{-10, 25}, Delta: [d]int32{30, 30}}
 
 	overlaps := o1.Overlaps(o2)
 	if !overlaps {
@@ -26,9 +26,9 @@ func TestOverlaps(t *testing.T) {
 }
 
 func TestContains(t *testing.T) {
-	o1 := &Orthotope{Point: [d]int32{10, -20}, Delta: [d]int32{30, 30}}
-	o2 := &Orthotope{Point: [d]int32{15, -20}, Delta: [d]int32{20, 20}}
-	o3 := &Orthotope{Point: [d]int32{-10, 5}, Delta: [d]int32{30, 30}}
+	o1 := &Orthotope[int32]{Point: [d]int32{10, -20}, Delta: [d]int32{30, 30}}
+	o2 := &Orthotope[int32]{Point: [d]int32{15, -20}, Delta: [d]int32{20, 20}}
+	o3 := &Orthotope[int32]{Point: [d]int32{-10, 5}, Delta: [d]int32{30, 30}}
 
 	contains := o1.Contains(o2)
 	if !contains {
@@ -47,7 +47,7 @@ func TestContains(t *testing.T) {
 }
 
 func TestScore(t *testing.T) {
-	o := &Orthotope{Point: [d]int32{10, -20}, Delta: [d]int32{30, 15}}
+	o := &Orthotope[int32]{Point: [d]int32{10, -20}, Delta: [d]int32{30, 15}}
 
 	score := o.Score()
 	expected := int32(45)
@@ -57,7 +57,7 @@ func TestScore(t *testing.T) {
 }
 
 func TestSurfaceArea(t *testing.T) {
-	o := &Orthotope{Point: [d]int32{0, 0, 0}, Delta: [d]int32{30, 15, 2}}
+	o := &Orthotope[int32]{Point: [d]int32{0, 0, 0}, Delta: [d]int32{30, 15, 2}}
 	want := int32(2) * (30*15 + 15*2 + 30*2)
 
 	if got := o.SurfaceArea(); got != want {
@@ -67,7 +67,7 @@ func TestSurfaceArea(t *testing.T) {
 }
 
 func TestVolume(t *testing.T) {
-	o := &Orthotope{Point: [d]int32{10, -20, -10}, Delta: [d]int32{30, 15, 1}}
+	o := &Orthotope[int32]{Point: [d]int32{10, -20, -10}, Delta: [d]int32{30, 15, 1}}
 
 	want := int32(450)
 	if got := o.Volume(); got != want {
@@ -76,11 +76,11 @@ func TestVolume(t *testing.T) {
 }
 
 func TestIntersects(t *testing.T) {
-	o1 := &Orthotope{Point: [d]int32{10, 15}, Delta: [d]int32{20, 10}}
-	o2 := &Orthotope{Point: [d]int32{55, 65}, Delta: [d]int32{20, 20}}
-	o3 := &Orthotope{Point: [d]int32{-20, 25}, Delta: [d]int32{30, 20}}
+	o1 := &Orthotope[int32]{Point: [d]int32{10, 15}, Delta: [d]int32{20, 10}}
+	o2 := &Orthotope[int32]{Point: [d]int32{55, 65}, Delta: [d]int32{20, 20}}
+	o3 := &Orthotope[int32]{Point: [d]int32{-20, 25}, Delta: [d]int32{30, 20}}
 
-	vector := &Orthotope{Point: [d]int32{5, 5}, Delta: [d]int32{10, 10}}
+	vector := &Orthotope[int32]{Point: [d]int32{5, 5}, Delta: [d]int32{10, 10}}
 
 	t1 := vector.Intersects(o1)
 	t2 := vector.Intersects(o2)
@@ -98,13 +98,13 @@ func TestIntersects(t *testing.T) {
 }
 
 func TestMinBounds(t *testing.T) {
-	o1 := &Orthotope{Point: [d]int32{10, -20}, Delta: [d]int32{30, 30}}
-	o2Orig := &Orthotope{Point: [d]int32{15, -20}, Delta: [d]int32{20, 20}}
-	o2 := &Orthotope{Point: [d]int32{15, -20}, Delta: [d]int32{20, 20}}
-	o3 := &Orthotope{Point: [d]int32{-10, 5}, Delta: [d]int32{30, 30}}
+	o1 := &Orthotope[int32]{Point: [d]int32{10, -20}, Delta: [d]int32{30, 30}}
+	o2Orig := &Orthotope[int32]{Point: [d]int32{15, -20}, Delta: [d]int32{20, 20}}
+	o2 := &Orthotope[int32]{Point: [d]int32{15, -20}, Delta: [d]int32{20, 20}}
+	o3 := &Orthotope[int32]{Point: [d]int32{-10, 5}, Delta: [d]int32{30, 30}}
 
 	o1.MinBounds(o2, o3)
-	expected := &Orthotope{Point: [d]int32{-10, -20}, Delta: [d]int32{45, 55}}
+	expected := &Orthotope[int32]{Point: [d]int32{-10, -20}, Delta: [d]int32{45, 55}}
 
 	if !reflect.DeepEqual(o1, expected) {
 		t.Errorf("Expected %v and %v doesn't match.", o1,
@@ -116,7 +116,7 @@ func TestMinBounds(t *testing.T) {
 }
 
 func TestOrthString(t *testing.T) {
-	o1 := &Orthotope{Point: [d]int32{10, -20}, Delta: [d]int32{30, 30}}
+	o1 := &Orthotope[int32]{Point: [d]int32{10, -20}, Delta: [d]int32{30, 30}}
 
 	if strings.Replace(o1.String(), " 0", "", -1) !=
 		"Point [10 -20], Delta [30 30]" {
@@ -125,10 +125,10 @@ func TestOrthString(t *testing.T) {
 }
 
 func TestOrthEquals(t *testing.T) {
-	o1 := &Orthotope{Point: [d]int32{10, -20}, Delta: [d]int32{30, 30}}
-	o2 := &Orthotope{Point: [d]int32{10, -20}, Delta: [d]int32{30, 30}}
-	o3 := &Orthotope{Point: [d]int32{10, -5}, Delta: [d]int32{30, 20}}
-	o4 := &Orthotope{Point: [d]int32{10, -5}, Delta: [d]int32{30, 25}}
+	o1 := &Orthotope[int32]{Point: [d]int32{10, -20}, Delta: [d]int32{30, 30}}
+	o2 := &Orthotope[int32]{Point: [d]int32{10, -20}, Delta: [d]int32{30, 30}}
+	o3 := &Orthotope[int32]{Point: [d]int32{10, -5}, Delta: [d]int32{30, 20}}
+	o4 := &Orthotope[int32]{Point: [d]int32{10, -5}, Delta: [d]int32{30, 25}}
 
 	if !o1.Equals(o2) {
 		t.Errorf("%v should equal %v", o1, o2)

@@ -79,4 +79,3 @@ def comparison(data1, data2, y_label):
     ax.legend()
 
     fig.savefig(''.join(x for x in y_label.title().split()) + ".svg")
-

@@ -6,28 +6,28 @@ import (
 )
 
 func TestNext(t *testing.T) {
-	bvs := []*BVol{
+	bvs := []*BVol[int32]{
 		{
-			vol: &Orthotope{
+			vol: &Orthotope[int32]{
 				Point: [DIMENSIONS]int32{2, 2},
 				Delta: [DIMENSIONS]int32{8, 8},
 			},
 		},
 		{
-			vol: &Orthotope{
+			vol: &Orthotope[int32]{
 				Point: [DIMENSIONS]int32{2, 2},
 				Delta: [DIMENSIONS]int32{2, 2},
 			},
 		},
 		{
-			vol: &Orthotope{
+			vol: &Orthotope[int32]{
 				Point: [DIMENSIONS]int32{7, 7},
 				Delta: [DIMENSIONS]int32{3, 3},
 			},
 		},
 	}
 
-	bvs[0].desc = [2]*BVol{bvs[1], bvs[2]}
+	bvs[0].desc = [2]*BVol[int32]{bvs[1], bvs[2]}
 	bvs[0].depth = 1
 
 	iter := bvs[0].Iterator()
@@ -42,17 +42,17 @@ func TestNext(t *testing.T) {
 
 func TestQuery(t *testing.T) {
 	tree := getIdealTree()
-	query := [5]*Orthotope{
+	query := [5]*Orthotope[int32]{
 		{Point: [d]int32{11, 12}, Delta: [d]int32{0, 0}},
 		{Point: [d]int32{14, 15}, Delta: [d]int32{0, 0}},
 		{Point: [d]int32{-2, -2}, Delta: [d]int32{30, 30}},
 		{Point: [d]int32{30, 30}, Delta: [d]int32{30, 30}},
 		{Point: [d]int32{17, 9}, Delta: [d]int32{5, 5}},
 	}
-	results := [5][]*Orthotope{
+	results := [5][]*Orthotope[int32]{
 		{leaf[4]},
 		{},
-		make([]*Orthotope, len(leaf)),
+		make([]*Orthotope[int32], len(leaf)),
 		{},
 		{leaf[3], leaf[5], leaf[6]},
 	}
@@ -81,7 +81,7 @@ func TestQuery(t *testing.T) {
 			t.Errorf("Querying %v did not return %v\n", q.String(), orth.String())
 		}
 	}
-	iter := (&BVol{}).Iterator()
+	iter := (&BVol[int32]{}).Iterator()
 	if iter.Query(leaf[0]) != nil {
 		t.Errorf("Querying an empty hierarchy returned non nil value!\n")
 	}
@@ -89,14 +89,14 @@ func TestQuery(t *testing.T) {
 
 func TestTrace(t *testing.T) {
 	tree := getIdealTree()
-	query := [5]*Orthotope{
+	query := [5]*Orthotope[int32]{
 		{Point: [d]int32{-2, 0}, Delta: [d]int32{4, 2}},
 		{Point: [d]int32{14, 11}, Delta: [d]int32{-1, 0}},
 		{Point: [d]int32{7, 20}, Delta: [d]int32{4, -5}},
 		{Point: [d]int32{30, 30}, Delta: [d]int32{-1, -1}},
 		{Point: [d]int32{0, 40}, Delta: [d]int32{5, -1}},
 	}
-	results := [5][]*Orthotope{
+	results := [5][]*Orthotope[int32]{
 		{leaf[0], leaf[3]},
 		{leaf[4]},
 		{leaf[7], leaf[3], leaf[2]},
@@ -125,7 +125,7 @@ func TestTrace(t *testing.T) {
 			t.Errorf("Tracing %v did not return %v\n", q.String(), orth.String())
 		}
 	}
-	iter := (&BVol{}).Iterator()
+	iter := (&BVol[int32]{}).Iterator()
 	if r, _ := iter.Trace(leaf[0]); r != nil {
 		t.Errorf("Tracing an empty hierarchy returned non nil value!\n")
 	}
@@ -134,7 +134,7 @@ func TestTrace(t *testing.T) {
 func TestBVHContains(t *testing.T) {
 	tree := getIdealTree()
 
-	toCheck := [4]*Orthotope{
+	toCheck := [4]*Orthotope[int32]{
 		leaf[2],
 		leaf[7],
 		{Point: [d]int32{100, 20}, Delta: [d]int32{8, 9}},

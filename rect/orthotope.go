@@ -5,19 +5,21 @@ import (
 	"fmt"
 	"math"
 
-	disc "github.com/briannoyama/bvh/discreet"
 )
 
 const DIMENSIONS int = 3
 
-type Orthotope struct {
-	Point [DIMENSIONS]int32
-	Delta [DIMENSIONS]int32
+type Num interface {
+	int32 | int64 | float32 | float64
+}
+type Orthotope[T Num] struct {
+	Point [DIMENSIONS]T
+	Delta [DIMENSIONS]T
 }
 
 var ACCURACY uint = 13
 
-func (o *Orthotope) Overlaps(orth *Orthotope) bool {
+func (o *Orthotope[T]) Overlaps(orth *Orthotope[T]) bool {
 	intersects := true
 	for index, p0 := range orth.Point {
 		p1 := orth.Delta[index] + p0
@@ -27,7 +29,7 @@ func (o *Orthotope) Overlaps(orth *Orthotope) bool {
 	return intersects
 }
 
-func (o *Orthotope) Contains(orth *Orthotope) bool {
+func (o *Orthotope[T]) Contains(orth *Orthotope[T]) bool {
 	contains := true
 	for index, p0 := range o.Point {
 		p1 := o.Delta[index] + p0
@@ -40,9 +42,9 @@ func (o *Orthotope) Contains(orth *Orthotope) bool {
 /*Let orth represent a direction (a vector where delta defines direction).
  *Return t > 0 for where it intersects, or -1 if it does not intersect.
  */
-func (orth *Orthotope) Intersects(o *Orthotope) int32 {
-	inT := int32(0)
-	outT := int32(math.MaxInt32)
+func (orth *Orthotope[T]) Intersects(o *Orthotope[T]) T {
+	inT := T(0)
+	outT := T(math.MaxInt32)
 	for index, p0 := range o.Point {
 		p1 := o.Delta[index] + p0
 
@@ -55,11 +57,15 @@ func (orth *Orthotope) Intersects(o *Orthotope) int32 {
 				// Swap p0 and p1 for negative directions.
 				p0, p1 = p1, p0
 			}
-			p0T := ((p0 - orth.Point[index]) << ACCURACY) / orth.Delta[index]
-			inT = disc.Max(inT, p0T)
+			p0subtract := p0 - orth.Point[index]
+			p1subtract := p1 - orth.Point[index]
+			pow2 := math.Pow(2, float64(ACCURACY))
 
-			p1T := ((p1 - orth.Point[index]) << ACCURACY) / orth.Delta[index]
-			outT = disc.Min(outT, p1T)
+			p0T := (p0subtract * T(pow2)) / orth.Delta[index]
+			inT = max(inT, p0T)
+
+			p1T := (p1subtract * T(pow2)) / orth.Delta[index]
+			outT = min(outT, p1T)
 		}
 	}
 
@@ -69,7 +75,7 @@ func (orth *Orthotope) Intersects(o *Orthotope) int32 {
 	return -1
 }
 
-func (o *Orthotope) MinBounds(others ...*Orthotope) {
+func (o *Orthotope[T]) MinBounds(others ...*Orthotope[T]) {
 	o.Point = others[0].Point
 	o.Delta = others[0].Delta
 
@@ -77,43 +83,43 @@ func (o *Orthotope) MinBounds(others ...*Orthotope) {
 		p1 := p0 + o.Delta[index]
 
 		for _, other := range others[1:] {
-			o.Point[index] = disc.Min(p0, other.Point[index])
-			p1 = disc.Max(p1, other.Point[index]+other.Delta[index])
+			o.Point[index] = min(p0, other.Point[index])
+			p1 = max(p1, other.Point[index]+other.Delta[index])
 		}
 		o.Delta[index] = p1 - o.Point[index]
 	}
 }
 
-func (o *Orthotope) Volume() int32 {
-	v := int32(1)
+func (o *Orthotope[T]) Volume() T {
+	v := T(1)
 	for _, d := range o.Delta {
 		v *= d
 	}
 	return v
 }
 
-func (o *Orthotope) SurfaceArea() int32 {
+func (o *Orthotope[T]) SurfaceArea() T {
 	if DIMENSIONS == 1 {
 		return 0
 	}
 
 	v := o.Volume()
-	sa := int32(0)
+	sa := T(0)
 	for i := 0; i < DIMENSIONS; i++ {
 		sa += v / o.Delta[i]
 	}
 	return 2 * sa
 }
 
-func (o *Orthotope) Score() int32 {
-	score := int32(0)
+func (o *Orthotope[T]) Score() T {
+	score := T(0)
 	for _, d := range o.Delta {
 		score += d
 	}
 	return score
 }
 
-func (o *Orthotope) Equals(other *Orthotope) bool {
+func (o *Orthotope[T]) Equals(other *Orthotope[T]) bool {
 	for index, point := range other.Point {
 		if o.Point[index] != point {
 			return false
@@ -126,6 +132,6 @@ func (o *Orthotope) Equals(other *Orthotope) bool {
 }
 
 // Get a string representation of this orthotope.
-func (o *Orthotope) String() string {
+func (o *Orthotope[T]) String() string {
 	return fmt.Sprintf("Point %v, Delta %v", o.Point, o.Delta)
 }

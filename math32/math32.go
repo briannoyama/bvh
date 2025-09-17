@@ -1,6 +1,8 @@
 package math32
 
-import "math"
+import ("math"
+	"golang.org/x/exp/constraints" // For Ordered constraint)
+)
 
 // SHIFT represents the number of bits in a 32 bit int minus 1
 const SHIFT uint = 31
@@ -71,4 +73,11 @@ func Int32Abs(i int32) int32 {
 // Int32Sign returns 0 for positive numbers and 1 for negative numbers
 func Int32Sign(i int32) int32 {
 	return (i >> SHIFT) & 1
+}
+
+func Abs[T constraints.Signed | constraints.Float](val T) T {
+	if val < 0 {
+		return -val
+	}
+	return val
 }

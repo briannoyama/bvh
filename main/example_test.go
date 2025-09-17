@@ -8,8 +8,8 @@ import (
 func TestExample(t *testing.T) {
 
 	// Change the DIMENSIONS constant in orthotope.go for your use case.
-	orth := &rect.Orthotope{Point: [3]int32{10, -20, 10}, Delta: [3]int32{30, 30, 30}}
-	bvol := &rect.BVol{}
+	orth := &rect.Orthotope[int32]{Point: [3]int32{10, -20, 10}, Delta: [3]int32{30, 30, 30}}
+	bvol := &rect.BVol[int32]{}
 
 	// Convenience method for adding/removing orthotopes.
 	bvol.Add(orth)
@@ -22,11 +22,11 @@ func TestExample(t *testing.T) {
 	iter.Add(orth)
 
 	// You can add identical Orthotopes. BVol differentiates identical orthotope objects by their address
-	orth2 := &rect.Orthotope{Point: [3]int32{10, -20, 10}, Delta: [3]int32{30, 30, 30}}
+	orth2 := &rect.Orthotope[int32]{Point: [3]int32{10, -20, 10}, Delta: [3]int32{30, 30, 30}}
 	iter.Add(orth2)
 
 	// Use iterators to query for overlapping Orthotopes
-	q := &rect.Orthotope{Point: [3]int32{0, -10, 10}, Delta: [3]int32{20, 20, 20}}
+	q := &rect.Orthotope[int32]{Point: [3]int32{0, -10, 10}, Delta: [3]int32{20, 20, 20}}
 	iter.Reset()
 	for r := iter.Query(q); r != nil; r = iter.Query(q) {
 		t.Logf("Orthtope: %d @%p", r, r)

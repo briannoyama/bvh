@@ -5,46 +5,47 @@ import (
 	"math"
 )
 
+
 // OrthStack gives methods for working with Orthotope BVol.
-type OrthStack interface {
+type OrthStack[T Num] interface {
 	Reset()
 	HasNext() bool
-	Next() *BVol
-	Trace(o *Orthotope) (*Orthotope, int32)
-	Query(o *Orthotope) *Orthotope
-	Add(orth *Orthotope) bool
-	Contains(orth *Orthotope) bool
-	Remove(o *Orthotope) bool
+	Next() *BVol[T]
+	Trace(o *Orthotope[T]) (*Orthotope[T], T)
+	Query(o *Orthotope[T]) *Orthotope[T]
+	Add(orth *Orthotope[T]) bool
+	Contains(orth *Orthotope[T]) bool
+	Remove(o *Orthotope[T]) bool
 }
 
-type orthStack struct {
-	bvh      *BVol
-	bvStack  []*BVol
-	intStack []int32
+type orthStack[T Num] struct {
+	bvh      *BVol[T]
+	bvStack  []*BVol[T]
+	intStack []int
 }
 
 // Resets the stack.
-func (s *orthStack) Reset() {
+func (s *orthStack[T]) Reset() {
 	s.intStack = s.intStack[:0]
 	s.bvStack = s.bvStack[:0]
 	s.bvStack = append(s.bvStack, s.bvh)
 	s.intStack = append(s.intStack, 0)
 }
 
-func (s *orthStack) HasNext() bool {
+func (s *orthStack[T]) HasNext() bool {
 	return len(s.bvStack) > 0
 }
 
-func (s *orthStack) append(bvol *BVol, index int32) {
+func (s *orthStack[T]) append(bvol *BVol[T], index int) {
 	s.bvStack = append(s.bvStack, bvol)
 	s.intStack = append(s.intStack, index)
 }
 
-func (s *orthStack) peek() (*BVol, int32) {
-	return s.bvStack[len(s.bvStack)-1], s.intStack[len(s.intStack)-1]
+func (s *orthStack[T]) peek() (*BVol[T], T) {
+	return s.bvStack[len(s.bvStack)-1], T(s.intStack[len(s.intStack)-1])
 }
 
-func (s *orthStack) pop() (*BVol, int32) {
+func (s *orthStack[T]) pop() (*BVol[T], T) {
 	bvol, index := s.peek()
 	s.bvStack = s.bvStack[:len(s.bvStack)-1]
 	s.intStack = s.intStack[:len(s.intStack)-1]
@@ -56,12 +57,12 @@ func (s *orthStack) pop() (*BVol, int32) {
  * organized such that peek reflects the next value that will be returned.
  * In this way, next pops off an element while traversing the tree in pre-order.
  */
-func (s *orthStack) Next() *BVol {
+func (s *orthStack[T]) Next() *BVol[T] {
 	bvolPrev, _ := s.peek()
 
 	if s.traceUp() {
 		bvol, index := s.peek()
-		bvol = bvol.desc[index]
+		bvol = bvol.desc[int(index)]
 		s.append(bvol, 0)
 	}
 
@@ -73,7 +74,7 @@ func (s *orthStack) Next() *BVol {
  * Its depth in the tree, and the distance from the beginning of the vector, o,
  * passed in.
  */
-func (s *orthStack) Trace(o *Orthotope) (*Orthotope, int32) {
+func (s *orthStack[T]) Trace(o *Orthotope[T]) (*Orthotope[T], T) {
 	if !s.HasNext() {
 		return nil, -1
 	}
@@ -88,10 +89,10 @@ func (s *orthStack) Trace(o *Orthotope) (*Orthotope, int32) {
 		if distance0 >= 0 {
 			if distance1 >= 0 {
 				if distance1 < distance0 {
-					s.append(bvol.desc[0], distance0)
+					s.append(bvol.desc[0], int(distance0))
 					bvol, distance = bvol.desc[1], distance1
 				} else {
-					s.append(bvol.desc[1], distance1)
+					s.append(bvol.desc[1], int(distance1))
 					bvol, distance = bvol.desc[0], distance0
 				}
 			} else {
@@ -112,7 +113,7 @@ func (s *orthStack) Trace(o *Orthotope) (*Orthotope, int32) {
 /* Goes up the tree until it finds the next unvisited child index, after
  * looking at parents.
  */
-func (s *orthStack) traceUp() bool {
+func (s *orthStack[T]) traceUp() bool {
 	bvol, index := s.peek()
 	for bvol.depth == 0 || index >= 2 {
 		s.pop()
@@ -129,7 +130,7 @@ func (s *orthStack) traceUp() bool {
 	return true
 }
 
-func (s *orthStack) queryNext(o *Orthotope) *BVol {
+func (s *orthStack[T]) queryNext(o *Orthotope[T]) *BVol[T] {
 	bvol, index := s.peek()
 	for bvol.depth > 0 {
 		if index >= 2 {
@@ -137,8 +138,8 @@ func (s *orthStack) queryNext(o *Orthotope) *BVol {
 				break
 			}
 		} else {
-			if bvol.desc[index].vol.Overlaps(o) {
-				s.append(bvol.desc[index], 0)
+			if bvol.desc[int(index)].vol.Overlaps(o) {
+				s.append(bvol.desc[int(index)], 0)
 			} else {
 				s.intStack[len(s.intStack)-1]++
 			}
@@ -152,7 +153,7 @@ func (s *orthStack) queryNext(o *Orthotope) *BVol {
  * Query looks for intersections between the orthotope, o, and the BVH
  * returning one intersection at a time.
  */
-func (s *orthStack) Query(o *Orthotope) *Orthotope {
+func (s *orthStack[T]) Query(o *Orthotope[T]) *Orthotope[T] {
 	// When the stack is empty, there are no more volumes to return.
 	if !s.HasNext() {
 		return nil
@@ -169,7 +170,7 @@ func (s *orthStack) Query(o *Orthotope) *Orthotope {
 	return bvol.vol
 }
 
-func (s *orthStack) path(o *Orthotope) *BVol {
+func (s *orthStack[T]) path(o *Orthotope[T]) *BVol[T] {
 	bvol, index := s.peek()
 	for bvol.vol != o && s.HasNext() {
 		if bvol.depth == 0 {
@@ -184,8 +185,8 @@ func (s *orthStack) path(o *Orthotope) *BVol {
 					break
 				}
 			} else {
-				if bvol.desc[index].vol.Contains(o) {
-					s.append(bvol.desc[index], 0)
+				if bvol.desc[int(index)].vol.Contains(o) {
+					s.append(bvol.desc[int(index)], 0)
 				} else {
 					s.intStack[len(s.intStack)-1]++
 				}
@@ -196,7 +197,7 @@ func (s *orthStack) path(o *Orthotope) *BVol {
 	return bvol
 }
 
-func (s *orthStack) Contains(o *Orthotope) bool {
+func (s *orthStack[T]) Contains(o *Orthotope[T]) bool {
 	s.Reset()
 	bvol := s.path(o)
 
@@ -205,28 +206,28 @@ func (s *orthStack) Contains(o *Orthotope) bool {
 }
 
 // Add an orthotope to a Bounding Volume Hierarchy. Only add to root volume.
-func (s *orthStack) Add(orth *Orthotope) bool {
+func (s *orthStack[T]) Add(orth *Orthotope[T]) bool {
 	s.Reset()
 	bvol := s.bvh
 	if bvol.vol == nil {
 		// Add by setting the vol when there is no volumes.
 		bvol.vol = orth
 	}
-	comp := Orthotope{}
-	lowIndex := int32(-1)
+	comp := Orthotope[T]{}
+	lowIndex := -1
 
 	for next := bvol; next.vol != orth; next = next.desc[lowIndex] {
 		if next.depth == 0 {
 			// We've reached a leaf node, and we need to insert a parent node.
-			next.desc[0] = &BVol{vol: orth}
-			next.desc[1] = &BVol{vol: next.vol}
+			next.desc[0] = &BVol[T]{vol: orth}
+			next.desc[1] = &BVol[T]{vol: next.vol}
 			next.depth = 1
 			comp = *next.vol
 			next.vol = &comp
-			lowIndex = int32(0)
+			lowIndex = 0
 		} else {
 			// We cannot add the orthotope here. Descend.
-			smallestScore := int32(math.MaxInt32)
+			smallestScore := T(math.MaxInt32)
 
 			for index, vol := range next.desc {
 				comp.MinBounds(orth, vol.vol)
@@ -238,7 +239,7 @@ func (s *orthStack) Add(orth *Orthotope) bool {
 
 				score := comp.Score() - vol.vol.Score()
 				if score < smallestScore {
-					lowIndex = int32(index)
+					lowIndex = index
 					smallestScore = score
 				}
 			}
@@ -252,7 +253,7 @@ func (s *orthStack) Add(orth *Orthotope) bool {
 }
 
 // Remove an orthotope from the BVH associated with this stack.
-func (s *orthStack) Remove(o *Orthotope) bool {
+func (s *orthStack[T]) Remove(o *Orthotope[T]) bool {
 	s.Reset()
 	bvol := s.path(o)
 	if o == bvol.vol {
@@ -262,11 +263,11 @@ func (s *orthStack) Remove(o *Orthotope) bool {
 			if s.HasNext() {
 				gParent, gIndex := s.peek()
 				// Delete the node by replacing the parent.
-				gParent.desc[gIndex] = parent.desc[pIndex^1]
+				gParent.desc[int(gIndex)] = parent.desc[int(pIndex)^1]
 				s.rebalanceRemove()
 			} else {
 				// Delete the node by replacing the volume and children with cousin.
-				cousin := parent.desc[pIndex^1]
+				cousin := parent.desc[int(pIndex)^1]
 				parent.vol = cousin.vol
 				parent.desc = cousin.desc
 				parent.depth = cousin.depth
@@ -281,9 +282,9 @@ func (s *orthStack) Remove(o *Orthotope) bool {
 }
 
 // Returns the total score by using the volumes Score method for each volume.
-func (s *orthStack) Score() int32 {
+func (s *orthStack[T]) Score() T {
 	s.Reset()
-	score := int32(0)
+	score := T(0)
 
 	for s.HasNext() {
 		score += s.Next().vol.Score()
@@ -291,7 +292,7 @@ func (s *orthStack) Score() int32 {
 	return score
 }
 
-func (s *orthStack) SAH(cInternal, cLeaves, cOverlap float64) float64 {
+func (s *orthStack[T]) SAH(cInternal, cLeaves, cOverlap float64) float64 {
 	s.Reset()
 
 	var ci, cl, co float64
@@ -311,18 +312,18 @@ func (s *orthStack) SAH(cInternal, cLeaves, cOverlap float64) float64 {
 }
 
 // Attempt rebalancing when the depth of the tree has potentially increased.
-func (s *orthStack) rebalanceAdd() {
+func (s *orthStack[T]) rebalanceAdd() {
 	gParent, gIndex := s.pop()
 	for s.HasNext() {
 		parent, pIndex := gParent, gIndex
 		gParent, gIndex = s.pop()
 
-		aIndex := gIndex ^ 1
+		aIndex := int(gIndex) ^ 1
 
-		if gParent.desc[aIndex].depth < parent.desc[pIndex].depth {
+		if gParent.desc[aIndex].depth < parent.desc[int(pIndex)].depth {
 			// Swap to fix balance.
-			parent.desc[pIndex], gParent.desc[aIndex] =
-				gParent.desc[aIndex], parent.desc[pIndex]
+			parent.desc[int(pIndex)], gParent.desc[aIndex] =
+				gParent.desc[aIndex], parent.desc[int(pIndex)]
 			parent.redepth()
 		}
 		gParent.redistribute()
@@ -333,22 +334,22 @@ func (s *orthStack) rebalanceAdd() {
 }
 
 // Attempt rebalancing when the depth of the tree has potentially decreased.
-func (s *orthStack) rebalanceRemove() {
+func (s *orthStack[T]) rebalanceRemove() {
 	for s.HasNext() {
 		parent, pIndex := s.pop()
 
-		cIndex := pIndex ^ 1
+		cIndex := int(pIndex) ^ 1
 		cousin := parent.desc[cIndex]
-		depth := parent.desc[pIndex].depth
+		depth := parent.desc[int(pIndex)].depth
 
 		if cousin.depth > depth+1 {
 			swap := 0
 			// Swap to fix balance. Try to minimize hierarchy with swap.
 			if cousin.desc[1].depth == depth+1 {
 				if cousin.desc[0].depth == depth+1 {
-					cousin.vol.MinBounds(cousin.desc[1].vol, parent.desc[pIndex].vol)
+					cousin.vol.MinBounds(cousin.desc[1].vol, parent.desc[int(pIndex)].vol)
 					score := cousin.vol.Score() - cousin.desc[1].vol.Score()
-					cousin.vol.MinBounds(cousin.desc[0].vol, parent.desc[pIndex].vol)
+					cousin.vol.MinBounds(cousin.desc[0].vol, parent.desc[int(pIndex)].vol)
 					if score < cousin.vol.Score()-cousin.desc[0].vol.Score() {
 						swap = 1
 					}
@@ -356,8 +357,8 @@ func (s *orthStack) rebalanceRemove() {
 					swap = 1
 				}
 			}
-			parent.desc[pIndex], cousin.desc[swap] =
-				cousin.desc[swap], parent.desc[pIndex]
+			parent.desc[int(pIndex)], cousin.desc[swap] =
+				cousin.desc[swap], parent.desc[int(pIndex)]
 			cousin.redepth()
 			cousin.minBound()
 		}

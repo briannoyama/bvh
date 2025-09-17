@@ -12,7 +12,7 @@ import (
 )
 
 func TestTopDownBVH(t *testing.T) {
-	orths := make([]*Orthotope, len(leaf))
+	orths := make([]*Orthotope[int32], len(leaf))
 	copy(orths, leaf[:])
 	tree := TopDownBVH(orths)
 	if tree.Score() > 262 {
@@ -24,27 +24,27 @@ func TestTopDownBVH(t *testing.T) {
 func TestSAH(t *testing.T) {
 	configs := []struct {
 		name string
-		t    *BVol
+		t    *BVol[int32]
 		want float64
 	}{
 		{
 			name: "Root",
-			t: &BVol{
-				vol: &Orthotope{Point: [d]int32{0, 0, 0}, Delta: [d]int32{10, 12, 1}},
+			t: &BVol[int32]{
+				vol: &Orthotope[int32]{Point: [d]int32{0, 0, 0}, Delta: [d]int32{10, 12, 1}},
 			},
 			want: 1.2,
 		},
 		{
 			name: "Recursive",
-			t: &BVol{
-				vol:   &Orthotope{Point: [d]int32{0, 0, 0}, Delta: [d]int32{10, 12, 1}}, // surface area = 284
+			t: &BVol[int32]{
+				vol:   &Orthotope[int32]{Point: [d]int32{0, 0, 0}, Delta: [d]int32{10, 12, 1}}, // surface area = 284
 				depth: 1,
-				desc: [2]*BVol{
-					&BVol{
-						vol: &Orthotope{Point: [d]int32{0, 0, 0}, Delta: [d]int32{3, 2, 1}}, // surface area = 22
+				desc: [2]*BVol[int32]{
+					&BVol[int32]{
+						vol: &Orthotope[int32]{Point: [d]int32{0, 0, 0}, Delta: [d]int32{3, 2, 1}}, // surface area = 22
 					},
-					&BVol{
-						vol: &Orthotope{Point: [d]int32{7, 9, 0}, Delta: [d]int32{3, 3, 1}}, // surface area = 30
+					&BVol[int32]{
+						vol: &Orthotope[int32]{Point: [d]int32{7, 9, 0}, Delta: [d]int32{3, 3, 1}}, // surface area = 30
 					},
 				},
 			},
@@ -64,7 +64,7 @@ func TestSAH(t *testing.T) {
 func TestAdd(t *testing.T) {
 	scores := [10]int32{4, 26, 57, 77, 100, 120, 135, 188, 218, 247}
 
-	tree := &BVol{}
+	tree := &BVol[int32]{}
 	for index, orth := range leaf {
 		if !tree.Add(orth) {
 			t.Errorf("Unable to add: %v\n", orth.String())
@@ -98,7 +98,7 @@ func TestRemove(t *testing.T) {
 	tree := getIdealTree()
 
 	// Reordering leaves to remove to test edge cases.
-	var toRemove [9]*Orthotope = [9]*Orthotope{
+	var toRemove [9]*Orthotope[int32] = [9]*Orthotope[int32]{
 		leaf[8],
 		leaf[0],
 		leaf[2],
@@ -173,33 +173,33 @@ func TestDuplicateVol(t *testing.T) {
 	}
 }
 
-func getIdealTree() *BVol {
-	tree := &BVol{depth: 4,
-		vol: &Orthotope{Point: [d]int32{2, 2}, Delta: [d]int32{21, 23}},
-		desc: [2]*BVol{
+func getIdealTree() *BVol[int32] {
+	tree := &BVol[int32]{depth: 4,
+		vol: &Orthotope[int32]{Point: [d]int32{2, 2}, Delta: [d]int32{21, 23}},
+		desc: [2]*BVol[int32]{
 			{depth: 3,
-				vol: &Orthotope{Point: [d]int32{16, 2}, Delta: [d]int32{7, 23}},
-				desc: [2]*BVol{
+				vol: &Orthotope[int32]{Point: [d]int32{16, 2}, Delta: [d]int32{7, 23}},
+				desc: [2]*BVol[int32]{
 					{depth: 1,
-						vol: &Orthotope{Point: [d]int32{18, 19}, Delta: [d]int32{5, 6}},
-						desc: [2]*BVol{
+						vol: &Orthotope[int32]{Point: [d]int32{18, 19}, Delta: [d]int32{5, 6}},
+						desc: [2]*BVol[int32]{
 							{vol: leaf[8]},
 							{vol: leaf[9]},
 						},
 					},
 					{depth: 2,
-						vol: &Orthotope{Point: [d]int32{16, 2}, Delta: [d]int32{6, 12}},
-						desc: [2]*BVol{
+						vol: &Orthotope[int32]{Point: [d]int32{16, 2}, Delta: [d]int32{6, 12}},
+						desc: [2]*BVol[int32]{
 							{depth: 1,
-								vol: &Orthotope{Point: [d]int32{16, 2}, Delta: [d]int32{5, 8}},
-								desc: [2]*BVol{
+								vol: &Orthotope[int32]{Point: [d]int32{16, 2}, Delta: [d]int32{5, 8}},
+								desc: [2]*BVol[int32]{
 									{vol: leaf[2]},
 									{vol: leaf[3]},
 								},
 							},
 							{depth: 1,
-								vol: &Orthotope{Point: [d]int32{17, 12}, Delta: [d]int32{5, 2}},
-								desc: [2]*BVol{
+								vol: &Orthotope[int32]{Point: [d]int32{17, 12}, Delta: [d]int32{5, 2}},
+								desc: [2]*BVol[int32]{
 									{vol: leaf[6]},
 									{vol: leaf[5]},
 								},
@@ -209,18 +209,18 @@ func getIdealTree() *BVol {
 				},
 			},
 			{depth: 2,
-				vol: &Orthotope{Point: [d]int32{2, 2}, Delta: [d]int32{10, 20}},
-				desc: [2]*BVol{
+				vol: &Orthotope[int32]{Point: [d]int32{2, 2}, Delta: [d]int32{10, 20}},
+				desc: [2]*BVol[int32]{
 					{depth: 1,
-						vol: &Orthotope{Point: [d]int32{4, 11}, Delta: [d]int32{8, 11}},
-						desc: [2]*BVol{
+						vol: &Orthotope[int32]{Point: [d]int32{4, 11}, Delta: [d]int32{8, 11}},
+						desc: [2]*BVol[int32]{
 							{vol: leaf[4]},
 							{vol: leaf[7]},
 						},
 					},
 					{depth: 1,
-						vol: &Orthotope{Point: [d]int32{2, 2}, Delta: [d]int32{8, 8}},
-						desc: [2]*BVol{
+						vol: &Orthotope[int32]{Point: [d]int32{2, 2}, Delta: [d]int32{8, 8}},
+						desc: [2]*BVol[int32]{
 							{vol: leaf[1]},
 							{vol: leaf[0]},
 						},
@@ -232,7 +232,7 @@ func getIdealTree() *BVol {
 	return tree
 }
 
-func drawBVH(BVol *BVol, name string) {
+func drawBVH(BVol *BVol[int32], name string) {
 	myimage := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{25, 25}})
 	iter := BVol.Iterator()
 	for iter.HasNext() {
@@ -253,7 +253,7 @@ func drawBVH(BVol *BVol, name string) {
 	_ = png.Encode(myfile, myimage)
 }
 
-var leaf [10]*Orthotope = [10]*Orthotope{
+var leaf [10]*Orthotope[int32] = [10]*Orthotope[int32]{
 	{Point: [d]int32{2, 2}, Delta: [d]int32{2, 2}},
 	{Point: [d]int32{7, 7}, Delta: [d]int32{3, 3}},
 	{Point: [d]int32{19, 2}, Delta: [d]int32{2, 2}},
