@@ -6,7 +6,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/briannoyama/go-fast/fast"
+	"github.com/briannoyama/go-fast/v2/fast"
 )
 
 type VolDepth[K any] struct {
@@ -169,23 +169,6 @@ func (b *Tree[K, V, D]) String() string {
 	return strings.Join(lines, "\n")
 }
 
-func (b *Tree[K, V, D]) Verify() {
-	b.verify(b.Root())
-}
-
-func (b *Tree[K, V, D]) verify(ref int) {
-	if ref < 0 {
-		return
-	}
-	rel := b.Rel(ref)
-	minbound := b.minbound(b.Key(rel[0]).vol, b.Key(rel[1]).vol)
-	if !b.equals(b.Key(ref).vol, minbound) {
-		panic(fmt.Sprintf("Invalid tree! %v != %v", b.Key(ref).vol, minbound))
-	}
-	b.verify(rel[0])
-	b.verify(rel[1])
-}
-
 func (b *Tree[K, V, D]) minBoundParent(ref int) {
 	rel := b.Rel(ref)
 	k0, k1 := b.Key(rel[0]), b.Key(rel[1])
@@ -198,12 +181,11 @@ func (b *Tree[K, V, D]) minBoundParent(ref int) {
 func (b *Tree[K, V, D]) redistribute(ref int) {
 	children := b.Rel(ref)
 	d0, d1 := b.Key(children[0]).depth, b.Key(children[1]).depth
-	diff := d0 - d1
 	if d0+d1 > 1 {
 		b.swapcheck0(children[0], children[1])
 	} else {
 		// Need & 1 since shifting negative int will result in -1
-		left := int(diff>>63) & 1
+		left := int((d0-d1)>>63) & 1
 		b.swapcheck1(children[left], children[1^left])
 	}
 }

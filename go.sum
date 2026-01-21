@@ -12,3 +12,5 @@ github.com/briannoyama/go-fast v1.1.0 h1:GnTDxPJ97jycwZ6EWESzKTjGhd6pr6z+/1dcM2J
 github.com/briannoyama/go-fast v1.1.0/go.mod h1:0EQLx6/DOb8I+c4O2wRFqSjFC57TC/FV7i8u1oqNWZc=
 github.com/briannoyama/go-fast v1.1.1-0.20260119021602-ac9c1f6e1760 h1:Nq6DmMjrL/GcaRgo+4Yl0UQbzcRQPEuhkoWJpi6W4WY=
 github.com/briannoyama/go-fast v1.1.1-0.20260119021602-ac9c1f6e1760/go.mod h1:0EQLx6/DOb8I+c4O2wRFqSjFC57TC/FV7i8u1oqNWZc=
+github.com/briannoyama/go-fast/v2 v2.1.1 h1:j5qjfAN7X3xgIj+3Jpo+a4wWyYOfONdTGDyI//GWi4c=
+github.com/briannoyama/go-fast/v2 v2.1.1/go.mod h1:u50Gtpn5uOra/WZmCb+PSY+EPiYSgRlj107qnONLpJE=

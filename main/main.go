@@ -86,6 +86,7 @@ func (b *bvhTest) runTest() {
 	removals := *distribute(r, b.Removals, b.Additions)
 	queries := *distribute(r, b.Queries, b.Additions)
 	total := 0
+	var addTime, subTime, queTime int64
 
 	for a := 0; a < b.Additions; a += 1 {
 		orth := b.makeOrth(r)
@@ -94,9 +95,10 @@ func (b *bvhTest) runTest() {
 		// Test the addition operation.
 		t := time.Now()
 		iter.Add(orth)
-		duration := time.Now().Sub(t).Nanoseconds()
+		duration := time.Since(t).Nanoseconds()
 		total += 1
 		fmt.Printf("add, %d, %d, %d, \"%s\"\n", total, bvol.GetDepth(), duration, orth)
+		addTime += duration
 
 		for removal := 0; removal < removals[a]; removal += 1 {
 			toRemove := r.Intn(a + 1)
@@ -111,6 +113,7 @@ func (b *bvhTest) runTest() {
 				duration := time.Now().Sub(t).Nanoseconds()
 				total -= 1
 				fmt.Printf("sub, %d, %d, %d, \"%s\"\n", total, bvol.GetDepth(), duration, orths[toRemove])
+				subTime += duration
 			} else if a+1 < len(removals) {
 				removals[a+1] += 1
 			}
@@ -128,9 +131,10 @@ func (b *bvhTest) runTest() {
 			duration := time.Now().Sub(t).Nanoseconds()
 			fmt.Printf("que, %d, %d, %d, %d, \"%s\"\n", total, bvol.GetDepth(),
 				duration, count, q)
+			queTime += duration
 		}
 	}
-	fmt.Printf("score, %d\n", bvol.Score())
+	fmt.Printf("score: %d, add: %d, sub: %d, que: %d\n", bvol.Score(), addTime, subTime, queTime)
 }
 
 func distribute(r *rand.Rand, totalEvents int, steps int) *[]int {

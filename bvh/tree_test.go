@@ -27,7 +27,7 @@ var keys = [10]o32{
 
 func TestAll(t *testing.T) {
 	// Add
-	scores := [10]float32{4, 26, 57, 77, 100, 120, 135, 188, 218, 247}
+	scores := [10]float32{4, 26, 57, 77, 100, 120, 135, 188, 218, 248}
 	refs := [10]int{}
 	tree := NewInt32Node[string]()
 	for i, v := range keys {

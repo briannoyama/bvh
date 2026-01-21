@@ -53,7 +53,7 @@ type bvhTest struct {
 func (b *bvhTest) comparisonTest() {
 	orths := make([]volume.Orthotope[int32], 0, b.Additions)
 	r := rand.New(rand.NewSource(b.RandSeed))
-	btree := bvh.NewInt32Node[int]()
+	btree := bvh.NewInt32Node[int](110000)
 	for a := 0; a < b.Additions; a += 1 {
 		orth := b.makeOrth(r)
 		orths = append(orths, orth)
@@ -67,7 +67,7 @@ func (b *bvhTest) runTest() {
 	refs := make([]int, b.Additions)
 	orths := make([]volume.Orthotope[int32], 0, b.Additions)
 	removed := make(map[int]bool, b.Additions)
-	btree := bvh.NewInt32Node[int]()
+	btree := bvh.NewInt32Node[int](110000)
 	r := rand.New(rand.NewSource(b.RandSeed))
 
 	if b.Removals > b.Additions {
@@ -78,6 +78,7 @@ func (b *bvhTest) runTest() {
 	removals := distribute(r, b.Removals, b.Additions)
 	queries := distribute(r, b.Queries, b.Additions)
 	total := 0
+	var addTime, subTime, queTime int64
 
 	for a := 0; a < b.Additions; a += 1 {
 		orth := b.makeOrth(r)
@@ -89,6 +90,7 @@ func (b *bvhTest) runTest() {
 		duration := time.Since(t).Nanoseconds()
 		total += 1
 		fmt.Printf("add, %d, %d, %d, \"%s\"\n", total, btree.Depth(), duration, volume.String(orth))
+		addTime += duration
 
 		for removal := 0; removal < removals[a]; removal += 1 {
 			toRemove := r.Intn(a + 1)
@@ -103,6 +105,7 @@ func (b *bvhTest) runTest() {
 				duration := time.Since(t).Nanoseconds()
 				total -= 1
 				fmt.Printf("sub, %d, %d, %d, \"%s\"\n", total, btree.Depth(), duration, volume.String(k))
+				subTime += duration
 			} else if a+1 < len(removals) {
 				removals[a+1] += 1
 			}
@@ -122,9 +125,10 @@ func (b *bvhTest) runTest() {
 			duration := time.Since(t).Nanoseconds()
 			fmt.Printf("que, %d, %d, %d, %d, \"%s\"\n", total, btree.Depth(),
 				duration, count, volume.String(q))
+			queTime += duration
 		}
 	}
-	fmt.Printf("score, %d\n", int(btree.Score()))
+	fmt.Printf("score: %d, add: %d, sub: %d, que: %d\n", int(btree.Score()), addTime, subTime, queTime)
 }
 
 func distribute(r *rand.Rand, totalEvents int, steps int) []int {
