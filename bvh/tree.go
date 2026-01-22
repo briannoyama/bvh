@@ -14,18 +14,18 @@ type VolDepth[K any] struct {
 	vol   K
 }
 
-type Tree[K, V, D any] struct {
+type Volume[K any, D any] interface {
+	Intersects(k1 K, d D) float32
+	Minbound(k1 K) K
+	Overlaps(k1 K) bool
+	Score() float32
+}
+
+type Tree[K Volume[K, D], V, D any] struct {
 	fast.FTreeMap[VolDepth[K], V]
-	contains   func(k0, k1 K) bool
-	equals     func(k0, k1 K) bool
-	intersects func(k0, k1 K, d D) float32
-	minbound   func(k ...K) K
-	overlaps   func(k0, k1 K) bool
-	score      func(k K) float32
 }
 
 func (b *Tree[K, V, D]) Add(k K, v V) int {
-	// fmt.Printf("%v\n\n\n", k)
 	var ref int
 	// Only happens when tree is empty or has 1 element
 	if b.Len() < 2 {
@@ -47,8 +47,8 @@ func (b *Tree[K, V, D]) Add(k K, v V) int {
 		rel := b.Rel(current)
 		k0 := b.Key(rel[0]).vol
 		k1 := b.Key(rel[1]).vol
-		s0 := b.score(b.minbound(k0, k)) - b.score(k0)
-		s1 := b.score(b.minbound(k1, k)) - b.score(k1)
+		s0 := k0.Minbound(k).Score() - k0.Score()
+		s1 := k1.Minbound(k).Score() - k1.Score()
 		next = int(math.Float32bits(s1-s0) >> 31)
 		parent = current
 		current = rel[next]
@@ -61,7 +61,6 @@ func (b *Tree[K, V, D]) Add(k K, v V) int {
 	parent = b.Rel(parent)[next]
 	b.minBoundParent(parent)
 
-	// fmt.Printf("%s%s", b.String(), "\n\n")
 	// Travel up the tree to rebalance
 	gparent := b.Rel(parent)[2]
 	for parent != b.Root() {
@@ -79,7 +78,6 @@ func (b *Tree[K, V, D]) Add(k K, v V) int {
 		// Try to swap children to optimize tree
 		b.redistribute(parent)
 		b.minBoundParent(parent)
-		// fmt.Printf("%s%s", b.String(), "\n\n")
 	}
 	return ref
 }
@@ -91,7 +89,7 @@ func (b *Tree[K, V, D]) Depth() int {
 func (b *Tree[K, V, D]) Intersects(k K, d D, t *float32) iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		b.VisitAll(func(v *VolDepth[K]) bool {
-			*t = b.intersects(k, v.vol, d)
+			*t = k.Intersects(v.vol, d)
 			return 0 <= *t && *t <= 1
 		}, func(k *VolDepth[K], v *V) bool {
 			return yield(k.vol, *v)
@@ -132,25 +130,17 @@ func (b *Tree[K, V, D]) Remove(ref int) (K, V) {
 func (b *Tree[K, V, D]) Query(k K) iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		b.VisitAll(func(v *VolDepth[K]) bool {
-			return b.overlaps(k, v.vol)
+			return k.Overlaps(v.vol)
 		}, func(k *VolDepth[K], v *V) bool {
 			return yield(k.vol, *v)
 		})
 	}
 }
 
-func (b *Tree[K, V, D]) Query2(k K, f func(k K, v V) bool) {
-	b.VisitAll(func(v *VolDepth[K]) bool {
-		return b.overlaps(k, v.vol)
-	}, func(k *VolDepth[K], v *V) bool {
-		return f(k.vol, *v)
-	})
-}
-
 func (b *Tree[K, V, D]) Score() float32 {
 	score := float32(0)
 	b.VisitAll(func(v *VolDepth[K]) bool {
-		score += b.score(v.vol)
+		score += v.vol.Score()
 		return true
 	}, func(*VolDepth[K], *V) bool { return true })
 	return score
@@ -173,7 +163,7 @@ func (b *Tree[K, V, D]) minBoundParent(ref int) {
 	rel := b.Rel(ref)
 	k0, k1 := b.Key(rel[0]), b.Key(rel[1])
 	*b.Key(ref) = VolDepth[K]{
-		vol:   b.minbound(k0.vol, k1.vol),
+		vol:   k0.vol.Minbound(k1.vol),
 		depth: max(k0.depth+1, k1.depth+1),
 	}
 }
@@ -181,7 +171,7 @@ func (b *Tree[K, V, D]) minBoundParent(ref int) {
 func (b *Tree[K, V, D]) redistribute(ref int) {
 	children := b.Rel(ref)
 	d0, d1 := b.Key(children[0]).depth, b.Key(children[1]).depth
-	if d0+d1 > 1 {
+	if d0 == d1 && d0 > 0 {
 		b.swapcheck0(children[0], children[1])
 	} else {
 		// Need & 1 since shifting negative int will result in -1
@@ -195,15 +185,15 @@ func (b *Tree[K, V, D]) swapcheck0(first, second int) {
 	k00, k01, k10, k11 := b.Key(r0[0]), b.Key(r0[1]), b.Key(r1[0]), b.Key(r1[1])
 
 	// Base case minIndex = -1
-	minScore := b.score(b.minbound(k00.vol, k01.vol)) + b.score(b.minbound(k10.vol, k11.vol))
+	minScore := k00.vol.Minbound(k01.vol).Score() + k10.vol.Minbound(k11.vol).Score()
 
 	// Swap minIndex = 0
-	score := b.score(b.minbound(k10.vol, k01.vol)) + b.score(b.minbound(k00.vol, k11.vol))
+	score := k10.vol.Minbound(k01.vol).Score() + k00.vol.Minbound(k11.vol).Score()
 	minIndex := 0 - int32(math.Float32bits(minScore-score)>>31)
 	minScore = min(score, minScore)
 
 	// Swap minIndex = 1
-	score = b.score(b.minbound(k10.vol, k00.vol)) + b.score(b.minbound(k01.vol, k11.vol))
+	score = k10.vol.Minbound(k00.vol).Score() + k01.vol.Minbound(k11.vol).Score()
 	flag := int32(math.Float32bits(minScore-score) >> 31)
 	minIndex = (flag * minIndex) | (flag ^ 1)
 
@@ -221,15 +211,15 @@ func (b *Tree[K, V, D]) swapcheck1(first, second int) {
 	k1 := b.Key(second)
 
 	// Base case minIndex = -1
-	minScore := b.score(b.minbound(k00.vol, k01.vol))
+	minScore := k00.vol.Minbound(k01.vol).Score()
 
 	// Swap minIndex = 0
-	score := b.score(b.minbound(k1.vol, k01.vol))
+	score := k1.vol.Minbound(k01.vol).Score()
 	minIndex := 0 - int32(math.Float32bits(minScore-score)>>31)
 	minScore = min(score, minScore)
 
 	// Swap minIndex = 1
-	score = b.score(b.minbound(k1.vol, k00.vol))
+	score = k1.vol.Minbound(k00.vol).Score()
 	flag := int32(math.Float32bits(minScore-score) >> 31)
 	minIndex = (flag * minIndex) | (flag ^ 1)
 

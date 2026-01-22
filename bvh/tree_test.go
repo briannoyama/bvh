@@ -27,9 +27,9 @@ var keys = [10]o32{
 
 func TestAll(t *testing.T) {
 	// Add
-	scores := [10]float32{4, 26, 57, 77, 100, 120, 135, 188, 218, 248}
+	scores := [10]float32{4, 26, 57, 77, 100, 120, 135, 188, 218, 247}
 	refs := [10]int{}
-	tree := NewInt32Node[string]()
+	tree := NewInt32Node[string](10)
 	for i, v := range keys {
 		refs[i] = tree.Add(v, volume.String(v))
 		if scores[i] != tree.Score() {
