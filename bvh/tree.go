@@ -15,6 +15,7 @@ type VolDepth[K any] struct {
 }
 
 type Volume[K any, D any] interface {
+	Equals(k1 K) bool
 	Intersects(k1 K, d D) float32
 	Minbound(k1 K) K
 	Overlaps(k1 K) bool
@@ -157,6 +158,23 @@ func (b *Tree[K, V, D]) String() string {
 		return true
 	})
 	return strings.Join(lines, "\n")
+}
+
+func (b *Tree[K, V, D]) Verify() {
+	b.verify(b.Root())
+}
+
+func (b *Tree[K, V, D]) verify(ref int) {
+	if ref < 0 {
+		return
+	}
+	rel := b.Rel(ref)
+	minbound := b.Key(rel[0]).vol.Minbound(b.Key(rel[1]).vol)
+	if !b.Key(ref).vol.Equals(minbound) {
+		panic(fmt.Sprintf("Invalid tree! %v != %v", b.Key(ref).vol, minbound))
+	}
+	b.verify(rel[0])
+	b.verify(rel[1])
 }
 
 func (b *Tree[K, V, D]) minBoundParent(ref int) {

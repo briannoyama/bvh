@@ -4,10 +4,6 @@ import (
 	"fmt"
 )
 
-type Num interface {
-	~int | ~int32 | ~int16 | ~float64 | ~float32
-}
-
 // Orthotope s are N dimensional rectangular polyhedra defined by a point (location) and a delta (width, height, etc)
 type Orthotope[K Num] struct {
 	P0, P1 [DIM]K

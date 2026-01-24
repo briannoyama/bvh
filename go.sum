@@ -1,16 +1,2 @@
-github.com/briannoyama/go-fast v0.0.0-20250826235417-4f6c2630fbc1 h1:ScN6c0mC1DuD64M1Oh0jiZxVkLji/2ivONBLlaqAkbU=
-github.com/briannoyama/go-fast v0.0.0-20250826235417-4f6c2630fbc1/go.mod h1:0EQLx6/DOb8I+c4O2wRFqSjFC57TC/FV7i8u1oqNWZc=
-github.com/briannoyama/go-fast v0.0.1 h1:gmnNO9YrELC3AAXlFzU/WznR5XMUcJNHGLH4YCUJe8g=
-github.com/briannoyama/go-fast v0.0.1/go.mod h1:0EQLx6/DOb8I+c4O2wRFqSjFC57TC/FV7i8u1oqNWZc=
-github.com/briannoyama/go-fast v0.1.0 h1:UMnvOXiLGaUHu0Ktkrv5ddBmzJCJqg4JhK/Y3LrLYoY=
-github.com/briannoyama/go-fast v0.1.0/go.mod h1:0EQLx6/DOb8I+c4O2wRFqSjFC57TC/FV7i8u1oqNWZc=
-github.com/briannoyama/go-fast v0.2.0 h1:G5HK9lQ5P9InXbFlnFlQ4YLpWUGa7UATXbfskkKCerM=
-github.com/briannoyama/go-fast v0.2.0/go.mod h1:0EQLx6/DOb8I+c4O2wRFqSjFC57TC/FV7i8u1oqNWZc=
-github.com/briannoyama/go-fast v1.0.0 h1:U+k0GPeDBjRHSsr5qZZ9Xjhet4EGG5LpL4bEjKK6+0c=
-github.com/briannoyama/go-fast v1.0.0/go.mod h1:0EQLx6/DOb8I+c4O2wRFqSjFC57TC/FV7i8u1oqNWZc=
-github.com/briannoyama/go-fast v1.1.0 h1:GnTDxPJ97jycwZ6EWESzKTjGhd6pr6z+/1dcM2JoqvA=
-github.com/briannoyama/go-fast v1.1.0/go.mod h1:0EQLx6/DOb8I+c4O2wRFqSjFC57TC/FV7i8u1oqNWZc=
-github.com/briannoyama/go-fast v1.1.1-0.20260119021602-ac9c1f6e1760 h1:Nq6DmMjrL/GcaRgo+4Yl0UQbzcRQPEuhkoWJpi6W4WY=
-github.com/briannoyama/go-fast v1.1.1-0.20260119021602-ac9c1f6e1760/go.mod h1:0EQLx6/DOb8I+c4O2wRFqSjFC57TC/FV7i8u1oqNWZc=
 github.com/briannoyama/go-fast/v2 v2.1.1 h1:j5qjfAN7X3xgIj+3Jpo+a4wWyYOfONdTGDyI//GWi4c=
 github.com/briannoyama/go-fast/v2 v2.1.1/go.mod h1:u50Gtpn5uOra/WZmCb+PSY+EPiYSgRlj107qnONLpJE=
