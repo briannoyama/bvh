@@ -6,6 +6,7 @@ import (
 	"math"
 	"strings"
 
+	"github.com/briannoyama/bvh/volume"
 	"github.com/briannoyama/go-fast/v2/fast"
 )
 
@@ -14,15 +15,7 @@ type VolDepth[K any] struct {
 	vol   K
 }
 
-type Volume[K any, D any] interface {
-	Equals(k1 K) bool
-	Intersects(k1 K, d D) float32
-	Minbound(k1 K) K
-	Overlaps(k1 K) bool
-	Score() float32
-}
-
-type Tree[K Volume[K, D], V, D any] struct {
+type Tree[K volume.Volume[K, D], V, D any] struct {
 	fast.FTreeMap[VolDepth[K], V]
 }
 
@@ -168,10 +161,13 @@ func (b *Tree[K, V, D]) verify(ref int) {
 	if ref < 0 {
 		return
 	}
+	container := b.Key(ref).vol
 	rel := b.Rel(ref)
-	minbound := b.Key(rel[0]).vol.Minbound(b.Key(rel[1]).vol)
-	if !b.Key(ref).vol.Equals(minbound) {
-		panic(fmt.Sprintf("Invalid tree! %v != %v", b.Key(ref).vol, minbound))
+	if !container.Contains(b.Key(rel[0]).vol) {
+		panic(fmt.Sprintf("Invalid tree! %v does not contain %v", container, b.Key(rel[0]).vol))
+	}
+	if !container.Contains(b.Key(rel[1]).vol) {
+		panic(fmt.Sprintf("Invalid tree! %v does not contain %v", container, b.Key(rel[1]).vol))
 	}
 	b.verify(rel[0])
 	b.verify(rel[1])

@@ -20,13 +20,35 @@ func (s0 Sphere[K]) Overlaps(s1 Sphere[K]) bool {
 // Contains returns true if all of sphere is within the bounds of o0. Ie. the intersection of o0 and 01 is equivalent to o1
 func (s0 Sphere[K]) Contains(s1 Sphere[K]) bool {
 	_, distance := s0.diff(s1)
-	bound := s0.R + s1.R
-	return bound*bound > distance+s1.R
+	bound := s0.R - s1.R
+	return bound >= 0 && bound*bound >= distance
 }
 
 // Intersects return 0 <= t <= 1 for where the sphere intersects along the delta, else t = 2 when there's no intersection
 func (s0 Sphere[K]) Intersects(s1 Sphere[K], d [DIM]K) float32 {
-	diff, distance := s0.diff(s1)
+	if s0.Overlaps(s1) {
+		return 0
+	}
+	var a, b, c float64
+	for index, p := range s0.P {
+		pd := s1.P[index] - p
+		a += float64(d[index] * d[index])
+		b += float64(d[index] * pd)
+		c += float64(pd * pd)
+	}
+	rd := float64(s0.R + s1.R)
+	b *= -2
+	c -= rd * rd
+
+	if b*b > 4*a*c {
+		sqrt := math.Sqrt(b*b - 4*a*c)
+		t0 := (-b - sqrt) / (2 * a)
+		t1 := (-b + sqrt) / (2 * a)
+		t0 = min(t0, t1)
+		if t0 >= 0 && t0 <= 1 {
+			return float32(t0)
+		}
+	}
 
 	return 2
 }
@@ -43,7 +65,7 @@ func (s0 Sphere[K]) Minbound(s1 Sphere[K]) Sphere[K] {
 		s.P[index] = p + diff[index]/2
 	}
 	// Add 1 to radius to ensure volume is bounded (prevents rouding error)
-	s.R = (distance+max(midOffset, -midOffset))/2 + 1
+	s.R = (distance+s1.R+s0.R)/2 + 1
 	return s
 }
 
