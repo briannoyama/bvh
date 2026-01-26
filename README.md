@@ -2,20 +2,22 @@
 
 ### Intro
 
-This code (hereby called onlineBVH) is a golang implementation of a binary self-balancing Bounding Volume Hierarchy (BVH) inspired by the tree rotations in [Fast, Effective BVH Updates for Animated Scenes](https://www.cs.utah.edu/~aek/research/tree.pdf). The hierarchies created via this algorithm have the following properties for _n_ volumes (defined by orthotopes) of any integer dimension (greater than 0):
+This code is a golang implementation of a binary self-balancing Bounding Volume Hierarchy (BVH) inspired by the tree rotations in [Fast, Effective BVH Updates for Animated Scenes](https://www.cs.utah.edu/~aek/research/tree.pdf). The BVH can be used with orthotopes (ie. Axis Aligned Bounding Boxes or AABB), spheres or other data types that implement the `volume.Volume` interface. The hierarchies created via this algorithm have the following properties for _n_ volumes of any natural dimension:
 
 - Average _log(n)_ addition/insertion time.
 - Average _log(n)_ removal time.
 - Average _mlog(n)_ query time where m is the number of volumes found.
 
+Note that this is the _Average_ as the big _O_ depends on the input (similar to hashmaps). 
+
 Example Use Cases:
 
 - Collisions between objects in a game or for ray tracing.
-- Dynamically updating n-dimentional vectors (e.g. word-vectors).
+- Dynamically updating a search index for n-dimentional vectors (e.g. word-vectors).
 
 ### How it Works
 
-The algorithm uses integers (personal preference) to define the points of volumes. Queries are thread-safe; however, additions and removals are not. The animations below show the algorithm in action (they are pixelated, save them and look at them on your computer to get rid of the blur): 
+The algorithm can use any volume uses integers (personal preference) to define the points of volumes. Queries are thread-safe; however, additions and removals are not. The animations below show the algorithm in action (they are pixelated, save them and look at them on your computer to get rid of the blur): 
 
 <table>
   <tr>
@@ -31,21 +33,21 @@ The algorithm uses integers (personal preference) to define the points of volume
   </tr>
   <tr>
     <td>
-      <img style="image-rendering: pixelated;" alt="Animated steps of showing addition of volumes to the BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/add.gif">
+      <img style="image-rendering: pixelated;" alt="Animated steps of showing addition of volumes to the BVH" width="200" src="https://github.com/briannoyama/bvhstats/blob/main/assets/add.gif">
     </td>
     <td>
-      <img style="image-rendering: pixelated;" alt="Animated steps of showing removal of volumes to the BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/remove0.gif">
+      <img style="image-rendering: pixelated;" alt="Animated steps of showing removal of volumes to the BVH" width="200" src="https://github.com/briannoyama/bvhstats/blob/main/assets/remove0.gif">
     </td>
     <td>
-      <img style="image-rendering: pixelated;" alt="Animated steps of showing an alernative removal of volumes to the BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/remove1.gif">
+      <img style="image-rendering: pixelated;" alt="Animated steps of showing an alernative removal of volumes to the BVH" width="200" src="https://github.com/briannoyama/bvhstats/blob/main/assets/remove1.gif">
     </td>
   </tr>
 </table>
 
-Here's an example of how to use the code:
+See `bvh/tree_test.go` for an example of how to use a `bvh.Tree`.
 
 ```golang
-import "github.com/briannoyama/bvh/rect"
+import "github.com/briannoyama/bvh/bvh"
 
 ...
 
