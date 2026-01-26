@@ -1,5 +1,5 @@
 #Ignore everything
-*.*
+#*.*
 #Except go and python files.
 !go.mod
 !go.sum
