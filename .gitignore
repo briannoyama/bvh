@@ -5,3 +5,4 @@
 !go.sum
 !*.go
 !*.python
+!*.md

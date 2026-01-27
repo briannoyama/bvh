@@ -1,4 +1,5 @@
-# Online Bounding Volume Hierarchy
+# Online Bounding Volume Hierarchy (Deprecated: Use v1.0.0+ instead)
+
 
 ### Intro
 
