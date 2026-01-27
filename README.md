@@ -1,5 +1,7 @@
 # Online Bounding Volume Hierarchy
 
+_Improvements compared to v0.*.*: Uses generic shapes + Add, Sub, and Query latency reduced by ~15%, 70% and 50%_
+
 ### Intro
 
 This code is a golang implementation of a binary self-balancing Bounding Volume Hierarchy (BVH) inspired by the tree rotations in [Fast, Effective BVH Updates for Animated Scenes](https://www.cs.utah.edu/~aek/research/tree.pdf). The BVH can be used with orthotopes (ie. Axis Aligned Bounding Boxes or AABB), spheres or other data types that implement the `volume.Volume` interface. The hierarchies created via this algorithm have the following properties for _n_ volumes of any natural dimension:
@@ -8,16 +10,26 @@ This code is a golang implementation of a binary self-balancing Bounding Volume 
 - Average _log(n)_ removal time.
 - Average _mlog(n)_ query time where m is the number of volumes found.
 
-Note that this is the _Average_ as the big _O_ depends on the input (similar to hashmaps). 
+Note that this is the _Average_ as the big _O_ depends on the input (similar to hashmaps).
 
-Example Use Cases:
+#### Example Use Cases:
 
 - Collisions between objects in a game or for ray tracing.
 - Dynamically updating a search index for n-dimentional vectors (e.g. word-vectors).
 
+#### Available Tree implementations:
+
+|         | Orthotope | Sphere  |
+| ------- | --------- | ------- |
+| int32   | &#9989;   | &#9989; |
+| int     | &#9989;   | &#9989; |
+| float32 | &#9989;   | &#9989; |
+
+- Note: this implementation is generic. BYO implementation of `volume.Volume`. See `volume.Orthotope` or `volume.Sphere` for an example.
+
 ### How it Works
 
-The algorithm can use any volume uses integers (personal preference) to define the points of volumes. Queries are thread-safe; however, additions and removals are not. The animations below show the algorithm in action (they are pixelated, save them and look at them on your computer to get rid of the blur): 
+Queries are thread-safe; however, additions and removals are not. The animations below show the algorithm in action:
 
 <table>
   <tr>
@@ -44,31 +56,45 @@ The algorithm can use any volume uses integers (personal preference) to define t
   </tr>
 </table>
 
-See `bvh/tree_test.go` for an example of how to use a `bvh.Tree`.
+See `bvh/tree_test.go` for an example of how to use a `bvh.Tree`. Below is a short code snippet showing most of the interesting functionality:
 
 ```golang
 import "github.com/briannoyama/bvh/bvh"
+import "github.com/briannoyama/bvh/volume"
 
 ...
 
-    // Change the DIMENSIONS constant in orthotope.go for your use case.
-    orth := &rect.Orthotope{Point: [3]int32{10, -20, 10}, Delta: [3]int32{30, 30, 30}}
-    bvol := &rect.BVol{}
-    
-    iter := bvol.Iterator()
-    iter.Add(orth)
-    iter.Reset()
+    // Pre allocate for 10 key (volume.Orthotope[int32]) value (string) pairs.
+    tree := bvh.NewInt32OrthTree[string](10)
 
-	q := &rect.Orthotope{Point: [3]int32{0, -10, 10}, Delta: [3]int32{20, 20, 20}}
-    for r := iter.Query(q); r != nil; r = iter.Query(q) {
-        fmt.Printf("Orthtope: %d @%p", r, r)
+    // Add a cube of length 2 to the coordinate (2, 2, 4)
+    // Change DIM as needed for your use-case
+    ref := tree.Add(volume.Orthotope[int32]{
+      P0: [volume.DIM]int32{2, 2, 4},
+      P1: [volume.DIM]int32{4, 4, 6}},
+    }, "Hello BVH!")
+
+    q := volume.Orthotope[int32]{
+      P0: [volume.DIM]int32{1, 1, 3},
+      P1: [volume.DIM]int32{3, 3, 5},
     }
 
-    iter.Remove(orth)
-    // See main/example_test.go for more complete example.
+    for k, v := range tree.Query(q) {
+      // Do something cool when things overlap
+    }
+
+    q.P1[0] = -1
+    var td float32
+    for k, v := range tree.Intersects(q, [volume.DIM]int32{4, 0, 0}, &td) {
+      // Do something cool when a volume with a velocity intersects at time td.
+    }
+
+    tree.Remove(ref)
 ```
 
-To ensure _log(n)_ access along with close to ideal performance, the algorithm swaps child nodes within the BVH tree both to balance the tree and to reduce the Surface Area of the generated bounding volumes. Below, one can see the output of onlineBVH vs an offline algorithm (hereby offlineBVH) that attempts to create "ideal" binary BVHs. The offline algorithm tries to create an ideal tree by sorting all of the volumes in each of their dimensions and comparing the surface areas of half the volumes at a time. Rinse and repeat recursively. This takes _O(dnlog<sup>2</sup>(n))_ for the offline method compared to the _O(nlog(n))_ time for the online method. (I'm not presenting a formal proof of big O. There may be a tighter big O bound, but that should be close enough.) In short, the offline method takes way more time to construct.
+### Performance
+
+To improve performance, the algorithm swaps child nodes within the BVH tree both to balance the tree and to reduce the Surface Area of the generated bounding volumes. This leads to trees that with generally lower (more efficient) Surface Area Heuristics when compared to simple sort and split offline algorithms.
 
 <table>
   <tr>
@@ -81,42 +107,27 @@ To ensure _log(n)_ access along with close to ideal performance, the algorithm s
   </tr>
   <tr>
     <td>
-      <img style="image-rendering: pixelated;" alt="Output of online algorithm for generating BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/online.png">
+      <img style="image-rendering: pixelated;" alt="Output of online algorithm for generating BVH" width="200" src="http://github.com/briannoyama/bvhstats/blob/main/assets/online.png">
     </td>
     <td>
-      <img style="image-rendering: pixelated;" alt="Output of offline algorithm for generating BVH" width="200" src="http://briannoyama.github.io/assets/images/bvh-steps/offline.png">
+      <img style="image-rendering: pixelated;" alt="Output of offline algorithm for generating BVH" width="200" src="http://github.com/briannoyama/bvhstats/blob/main/assets/offline.png">
     </td>
   </tr>
 </table>
 
-### Performance Test
+For those who plan to use onlineBVH for an application with strict runtime requirements, I conducted a small experiment on an AMD Ryzen 7 7735HS. The test generated random int32 Orthotopes in a 3D space to add (100,000) remove (50,000) and query (100,000) such that the final BVH would contain 50,000 items. Running this test 5 times and combining the data gave the following performance graphs:
 
-For those who plan to use onlineBVH for an application with strict runtime requirements, I conducted a small experiment on my Intel Core i5-7440HQ CPU @ 2.80GHz × 4. The test generated random cubes in a 3D space to add (100,000) remove (50,000) and query (100,000) such that the final BVH would contain 50,000 items. I ran this test 20 times and combined the data to get the below graphs:
+![Latency of adding an object per number of volumes](http://github.com/briannoyama/bvhstats/blob/main/assets/AddRuntimePerSize.svg)
+![Latency of adding an object per depth](http://github.com/briannoyama/bvhstats/blob/main/assets/AddRuntimePerDepth.svg)
 
-The different colored lines represent the different percentiles. The additions hovered around 10us at the 99%ile. The per size graph had a lot of noise, most likely because I did not run enough tests =P. Instead of running more tests (perhaps like I should have), I did a moving window average of 100 points before and averaged each point plotted in the graph below (and it still had a lot of noise). I do not understand the weird dip in add latency for trees of depth ~12.
+I'm not 100 on why the algorithm improves in efficiency ~12K volumes (golang magic? Please email me if you have any ideas). Runtime per depth shows (with the exception of needing to warm up the cache for initial adds), that the latency of adds/subtracts increases linearly with the depth of the tree, or logarithmically with the number of volumes added.
 
-![Speed of adding an object per depth](http://briannoyama.github.io/assets/images/bvh-steps/AddRuntimePerDepth.svg)
-![Speed of adding an object per number of volumes](http://briannoyama.github.io/assets/images/bvh-steps/AddRuntimePerSize.svg)
+![Latency of removing an object per number of volumes](http://github.com/briannoyama/bvhstats/blob/main/assets/SubRuntimePerSize.svg)
+![Latency of removing an object per depth](http://github.com/briannoyama/bvhstats/blob/main/assets/SubRuntimePerDepth.svg)
 
-Subtractions worked closer to what I expected. The performance seems to increase linearly. It takes approximately 100 times as long to remove an item after 50,000 volumes have been added versus removing an item when there's only one in the hierarchy. (Note, since the BVH is also a binary tree, there are ~50,000 parent volumes.) Other than height, the runtime performance also depends on the surface area of the volumes. The surface area is a good metric for the odds that a random query (or subtraction) volume will have to search multiple paths in the tree.
+Querying follows this pattern, and exhibits similar latency largely independent of how many objects are returned.
 
-![Speed of removing an object per number of volumes](http://briannoyama.github.io/assets/images/bvh-steps/SubRuntimePerSize.svg)
-![Speed of removing an object per depth](http://briannoyama.github.io/assets/images/bvh-steps/SubRuntimePerDepth.svg)
+![Latency of querying an object per depth](http://github.com/briannoyama/bvhstats/blob/main/assets/QueryPerDepth.svg)
+![Latency of querying an object per number of volumes](http://github.com/briannoyama/bvhstats/blob/main/assets/QueryPerSize.svg)
 
-Due to the random nature of the test, there does not exist data for smaller BVHs with smaller depths for all of the possible return values. (Query 2 means two volumes were returned or intersected by the query volume.) After a depth of ~15 the speed of both subtraction and query is slower than that for add (~0.01 ms). Surprisingly, the number of volumes affected seemed to have very little effect on the performance. This is likely because the query method does not have to recurse back to the root of the tree to find more things to return. 
-
-![Speed of querying an object per depth](http://briannoyama.github.io/assets/images/bvh-steps/QueryPerDepth.svg)
-![Speed of querying an object per number of volumes](http://briannoyama.github.io/assets/images/bvh-steps/QueryPerSize.svg)
-
-As mentioned, there are two things that should (in theory) determine the performance of a BVH. One is the depth of the tree, and the other is the surface area of the tree. The different sizes of the parent volumes affect the total surface area. This test only relied on additions for the online method. The offline represents an approximate best possible tree created by ordering the volumes along aall possible dimensions and splitting them in half.
-
-![Depth of the online vs offline algorithms](http://briannoyama.github.io/assets/images/bvh-steps/Depth.svg)
-![Surface area of the online vs offline algorithms](http://briannoyama.github.io/assets/images/bvh-steps/SurfaceArea.svg)
-
-Surprisingly, the online tree creates a tree almost as well as the offline algorithm, both of which grow linearly. For this study we ended at around 14000 added volumes due to the time it took to create an offline tree.
-
-A few thoughts about the performance: There are a large number of relatively small method calls that are not likely inlined (which ones? I leave this as an activity for the reader). Currently for moving an existing volume, one needs to do a removal followed by an addition. The results from the query study suggests that for volumes that only need to be moved a small amount, it may be possible to make a better movement method that would take approximately half the time.
-
-I did not do studies for the memory usage, though one can probably get a good estimate from looking at the code (fairly minimal). If one has questions, feel free to email me.
-
-*This is not an officially supported Google product.
+For any questions, feel free to email me.

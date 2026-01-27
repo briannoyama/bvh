@@ -29,14 +29,13 @@ func TestAll(t *testing.T) {
 	// Add
 	scores := [10]float32{4, 26, 57, 77, 100, 120, 135, 188, 218, 247}
 	refs := [10]int{}
-	tree := NewInt32Node[string](10)
+	tree := NewInt32OrthTree[string](10)
 	for i, v := range keys {
-		refs[i] = tree.Add(v, volume.String(v))
+		refs[i] = tree.Add(v, v.String())
 		if scores[i] != tree.Score() {
 			t.Errorf("Unoptimal score (add). Expected %f, got %f\n", scores[i], tree.Score())
 		}
 	}
-	// TODO String Test
 
 	// Query
 	query(t, tree, o32{P0: [volume.DIM]int32{11, 12}, P1: [volume.DIM]int32{11, 12}}, keys[4:5])
@@ -69,10 +68,10 @@ func TestAll(t *testing.T) {
 	}
 }
 
-func intersect(t *testing.T, tree Int32Node[string], q o32, d [volume.DIM]int32, rd []float32, rO32 []o32) {
+func intersect(t *testing.T, tree Int32OrthTree[string], q o32, d [volume.DIM]int32, rd []float32, rO32 []o32) {
 	results := map[o32]string{}
 	for i, r := range rO32 {
-		results[r] = fmt.Sprintf("%s : %f", volume.String(r), rd[i])
+		results[r] = fmt.Sprintf("%s : %f", r.String(), rd[i])
 	}
 	td := float32(0)
 	for k, v := range tree.Intersects(q, d, &td) {
@@ -81,11 +80,11 @@ func intersect(t *testing.T, tree Int32Node[string], q o32, d [volume.DIM]int32,
 	checkAllValues(t, results)
 }
 
-func query(t *testing.T, tree Int32Node[string], q o32, rO32 []o32) {
+func query(t *testing.T, tree Int32OrthTree[string], q o32, rO32 []o32) {
 	t.Helper()
 	results := map[o32]string{}
 	for _, r := range rO32 {
-		results[r] = volume.String(r)
+		results[r] = r.String()
 	}
 	for k, v := range tree.Query(q) {
 		checkAgainst(t, k, v, results)
