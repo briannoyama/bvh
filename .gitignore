@@ -4,5 +4,4 @@
 !go.mod
 !go.sum
 !*.go
-!*.python
 !*.md

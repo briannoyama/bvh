@@ -1,5 +1,4 @@
-# Online Bounding Volume Hierarchy (Deprecated: Use v1.0.0+ instead)
-
+# Online Bounding Volume Hierarchy
 
 _Improvements compared to v0.0.0: Uses generic shapes + stores shapes as key/values pairs + Add, Sub, and Query latency reduced by ~15%, 70% and 50%_
 
