@@ -1,6 +1,6 @@
 # Online Bounding Volume Hierarchy
 
-_Improvements compared to v0.*.*: Uses generic shapes + Add, Sub, and Query latency reduced by ~15%, 70% and 50%_
+_Improvements compared to v0.0.0: Uses generic shapes + stores shapes as key/values pairs + Add, Sub, and Query latency reduced by ~15%, 70% and 50%_
 
 ### Intro
 
@@ -19,11 +19,11 @@ Note that this is the _Average_ as the big _O_ depends on the input (similar to 
 
 #### Available Tree implementations:
 
-|         | Orthotope | Sphere  |
-| ------- | --------- | ------- |
-| int32   | &#9989;   | &#9989; |
-| int     | &#9989;   | &#9989; |
-| float32 | &#9989;   | &#9989; |
+|           | `volume.Orthotope` | `volume.Sphere` |
+| --------- | ------------------ | --------------- |
+| `int32`   | &#9989;            | &#9989;         |
+| `int`     | &#9989;            | &#9989;         |
+| `float32` | &#9989;            | &#9989;         |
 
 - Note: this implementation is generic. BYO implementation of `volume.Volume`. See `volume.Orthotope` or `volume.Sphere` for an example.
 
@@ -107,27 +107,27 @@ To improve performance, the algorithm swaps child nodes within the BVH tree both
   </tr>
   <tr>
     <td>
-      <img style="image-rendering: pixelated;" alt="Output of online algorithm for generating BVH" width="200" src="http://github.com/briannoyama/bvhstats/blob/main/assets/online.png">
+      <img style="image-rendering: pixelated;" alt="Output of online algorithm for generating BVH" width="200" src="https://github.com/briannoyama/bvhstats/blob/main/assets/online.png">
     </td>
     <td>
-      <img style="image-rendering: pixelated;" alt="Output of offline algorithm for generating BVH" width="200" src="http://github.com/briannoyama/bvhstats/blob/main/assets/offline.png">
+      <img style="image-rendering: pixelated;" alt="Output of offline algorithm for generating BVH" width="200" src="https://github.com/briannoyama/bvhstats/blob/main/assets/offline.png">
     </td>
   </tr>
 </table>
 
 For those who plan to use onlineBVH for an application with strict runtime requirements, I conducted a small experiment on an AMD Ryzen 7 7735HS. The test generated random int32 Orthotopes in a 3D space to add (100,000) remove (50,000) and query (100,000) such that the final BVH would contain 50,000 items. Running this test 5 times and combining the data gave the following performance graphs:
 
-![Latency of adding an object per number of volumes](http://github.com/briannoyama/bvhstats/blob/main/assets/AddRuntimePerSize.svg)
-![Latency of adding an object per depth](http://github.com/briannoyama/bvhstats/blob/main/assets/AddRuntimePerDepth.svg)
+![Latency of adding an object per number of volumes](https://github.com/briannoyama/bvhstats/blob/main/assets/AddRuntimePerSize.svg)
+![Latency of adding an object per depth](https://github.com/briannoyama/bvhstats/blob/main/assets/AddRuntimePerDepth.svg)
 
 I'm not 100 on why the algorithm improves in efficiency ~12K volumes (golang magic? Please email me if you have any ideas). Runtime per depth shows (with the exception of needing to warm up the cache for initial adds), that the latency of adds/subtracts increases linearly with the depth of the tree, or logarithmically with the number of volumes added.
 
-![Latency of removing an object per number of volumes](http://github.com/briannoyama/bvhstats/blob/main/assets/SubRuntimePerSize.svg)
-![Latency of removing an object per depth](http://github.com/briannoyama/bvhstats/blob/main/assets/SubRuntimePerDepth.svg)
+![Latency of removing an object per number of volumes](https://github.com/briannoyama/bvhstats/blob/main/assets/SubRuntimePerSize.svg)
+![Latency of removing an object per depth](https://github.com/briannoyama/bvhstats/blob/main/assets/SubRuntimePerDepth.svg)
 
 Querying follows this pattern, and exhibits similar latency largely independent of how many objects are returned.
 
-![Latency of querying an object per depth](http://github.com/briannoyama/bvhstats/blob/main/assets/QueryPerDepth.svg)
-![Latency of querying an object per number of volumes](http://github.com/briannoyama/bvhstats/blob/main/assets/QueryPerSize.svg)
+![Latency of querying an object per depth](https://github.com/briannoyama/bvhstats/blob/main/assets/QueryPerDepth.svg)
+![Latency of querying an object per number of volumes](https://github.com/briannoyama/bvhstats/blob/main/assets/QueryPerSize.svg)
 
 For any questions, feel free to email me.
