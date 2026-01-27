@@ -53,7 +53,7 @@ func TestSphereIntersects(t *testing.T) {
 	if t1 != 0 {
 		t.Errorf("Expected 0, got %v.", t1)
 	}
-	if t2 != 1 {
+	if t2 >= 1 {
 		t.Errorf("Expected distance to be less than 1 got %v.", t2)
 	}
 	if t3 != 2 {
