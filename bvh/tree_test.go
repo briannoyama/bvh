@@ -37,6 +37,12 @@ func TestAll(t *testing.T) {
 		}
 	}
 
+	for i, r := range refs {
+		if keys[i] != tree.Key(r) {
+			t.Errorf("Key does not match volume. Expected %v, got %v\n", keys[i], tree.Key(r))
+		}
+	}
+
 	// Query
 	query(t, tree, o32{P0: [volume.DIM]int32{11, 12}, P1: [volume.DIM]int32{11, 12}}, keys[4:5])
 	query(t, tree, o32{P0: [volume.DIM]int32{14, 15}, P1: [volume.DIM]int32{14, 15}}, keys[0:0])
