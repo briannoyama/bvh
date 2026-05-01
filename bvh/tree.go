@@ -84,6 +84,10 @@ func (b *Tree[K, V, D]) Key(ref int) K {
 	return b.f.Key(ref ^ -1).vol
 }
 
+func (b *Tree[K, V, D]) KeyVal(ref int) (K, V) {
+	return b.f.Key(ref ^ -1).vol, *b.f.Val(ref ^ -1)
+}
+
 func (b *Tree[K, V, D]) Intersects(k K, d D, t *float32) iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		b.f.VisitAll(func(v *VolDepth[K]) bool {

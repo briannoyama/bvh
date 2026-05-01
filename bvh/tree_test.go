@@ -41,6 +41,10 @@ func TestAll(t *testing.T) {
 		if keys[i] != tree.Key(r) {
 			t.Errorf("Key does not match volume. Expected %v, got %v\n", keys[i], tree.Key(r))
 		}
+		k, v := tree.KeyVal(r)
+		if k.String() != v {
+			t.Errorf("Key does not map to expected value. Expected %v, got %s\n", k, v)
+		}
 	}
 
 	// Query
