@@ -47,6 +47,12 @@ func TestAll(t *testing.T) {
 		}
 	}
 
+	bounds := tree.Bounds()
+	expected := o32{P0: [volume.DIM]int32{2, 2}, P1: [volume.DIM]int32{23, 25}}
+	if bounds != expected {
+		t.Errorf("Incorrect bounds. Expected %v, got %v\n", expected, bounds)
+	}
+
 	// Query
 	query(t, tree, o32{P0: [volume.DIM]int32{11, 12}, P1: [volume.DIM]int32{11, 12}}, keys[4:5])
 	query(t, tree, o32{P0: [volume.DIM]int32{14, 15}, P1: [volume.DIM]int32{14, 15}}, keys[0:0])
