@@ -77,7 +77,11 @@ func (b *Tree[K, V, D]) Add(k K, v V) int {
 }
 
 func (b *Tree[K, V, D]) Bounds() K {
-	return b.f.Key(b.f.Root()).vol
+	var k K
+	if b.f.Len() > 0 {
+		k = b.f.Key(b.f.Root()).vol
+	}
+	return k
 }
 
 func (b *Tree[K, V, D]) Depth() int {

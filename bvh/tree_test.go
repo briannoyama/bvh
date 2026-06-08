@@ -30,6 +30,8 @@ func TestAll(t *testing.T) {
 	scores := [10]float32{4, 26, 57, 77, 100, 120, 135, 188, 218, 247}
 	refs := [10]int{}
 	tree := NewInt32OrthTree[string](10)
+	// Ensure tree.Bounds() does not cause crash when tree is empty
+	tree.Bounds()
 	for i, v := range keys {
 		refs[i] = tree.Add(v, v.String())
 		if scores[i] != tree.Score() {
