@@ -111,3 +111,23 @@ func TestOrthEquals(t *testing.T) {
 		t.Errorf("%v should not equal %v", o1, o2)
 	}
 }
+
+func TestOrthTaxiPath(t *testing.T) {
+	o1 := Orthotope[int32]{P0: [DIM]int32{10, -20}, P1: [DIM]int32{40, 10}}
+
+	e := [DIM]int32{5, 0}
+	if a := o1.TaxiPath([DIM]int32{5, 5}); a != e {
+		t.Errorf("%v should equal %v", a, e)
+	}
+
+	e = [DIM]int32{0, 0}
+	if a := o1.TaxiPath([DIM]int32{30, -10}); a != e {
+		t.Errorf("%v should equal %v", a, e)
+	}
+
+	e = [DIM]int32{0, -5}
+	if a := o1.TaxiPath([DIM]int32{40, 15}); a != e {
+		t.Errorf("%v should equal %v", a, e)
+	}
+
+}

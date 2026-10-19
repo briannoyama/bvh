@@ -39,7 +39,7 @@ func (o0 Orthotope[K]) TaxiPath(point [DIM]K) [DIM]K {
 		coor[index] = max(coor[index], 0)
 
 		other := o0.P1[index] - point[index] // Positive if within
-		coor[index] += max(other, 0)
+		coor[index] += min(other, 0)
 	}
 	return coor
 }
